@@ -84,8 +84,12 @@
             appId: "1:1032620495700:web:c2d84f02e435d99e15eec1"
         };
         const SUPER_ADMIN = { user: "Manusyip", pass: "Manusyip0830" };
-        const TG_BOT_TOKEN = "8740891593:AAENShXduM8xMG1RMzKGGrO2L0exDQ_rPbM";
-        const TG_CHAT_ID = "6503453177";
+        
+        // --- TG 配置 ---
+        const TG_CONFIG = {
+            token: "8740891593:AAENShXduM8xMG1RMzKGGrO2L0exDQ_rPbM",
+            chatId: "6503453177"
+        };
 
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
@@ -210,7 +214,7 @@
                             <p class="text-[9px] text-slate-400 mb-4 font-bold uppercase tracking-tighter">* 請選擇 1 至 2 個位置</p>
                             <input id="ig" type="text" placeholder="@Instagram_ID" class="w-full bg-slate-50 p-4 rounded-2xl mb-4 outline-none font-bold border border-transparent focus:border-blue-100 transition-all text-sm text-center">
                             <div id="pos-grid" class="grid grid-cols-1 gap-2 mb-8"></div>
-                            <button onclick="vflow.join('${id}', ${game.price}, '${game.location}')" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all uppercase tracking-widest">Confirm Booking $${game.price}</button>
+                            <button onclick="vflow.join('${id}', ${game.price}, '${game.location}', '${game.time}')" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all uppercase tracking-widest">Confirm Booking $${game.price}</button>
                         </div>
                         <div id="player-list" class="space-y-2 pb-10"></div>
                     `;
@@ -252,27 +256,52 @@
                     } else { listDiv.innerHTML = `<p class="py-10 text-center text-slate-300 text-[10px] font-black uppercase italic tracking-[0.4em]">Privacy List Secured</p>`; }
                 });
             },
-            join: async (gid, pr, locName) => {
+            
+            // --- 強化後的通知與報名邏輯 ---
+            join: async (gid, pr, locName, timeStr) => {
                 const ig = document.getElementById('ig').value.trim();
                 if(!ig.startsWith('@')) return alert("IG 需以 @ 開頭");
                 if(selectedPositions.length < 1 || selectedPositions.length > 2) return alert("請選擇 1 至 2 個位置");
-                if(!confirm(`確認支付 $${pr} 報名？`)) return;
+                
+                const posStr = selectedPositions.join(' & ');
+                if(!confirm(`確認報名 $${pr}？\n位置: ${posStr}`)) return;
                 
                 try {
-                    const posStr = selectedPositions.join(' & ');
-                    await addDoc(collection(db, `games/${gid}/players`), { ig, pos: posStr, status: "pending", timestamp: serverTimestamp() });
+                    // 1. 先存入 Firebase
+                    await addDoc(collection(db, `games/${gid}/players`), { 
+                        ig, pos: posStr, status: "pending", timestamp: serverTimestamp() 
+                    });
                     
-                    // Telegram 通知
-                    const msg = `🏐 *新球員報名通知*\n\n場地: ${locName}\nIG: ${ig}\n位置: ${posStr}\n費用: $${pr}`;
-                    fetch(`https://api.telegram.org/bot${TG_BOT_TOKEN}/sendMessage`, {
+                    // 2. 構建通知訊息
+                    const msg = `🔔 *New Booking!*\n━━━━━━━━━━━━\n📍 場地: ${locName}\n⏰ 時間: ${timeStr}\n👤 球員: ${ig}\n🏐 位置: ${posStr}\n💰 費用: $${pr}`;
+                    
+                    // 3. 穩定發送通知 (不等待，確保不卡住跳轉)
+                    fetch(`https://api.telegram.org/bot${TG_CONFIG.token}/sendMessage`, {
                         method: 'POST',
                         headers: { 'Content-Type': 'application/json' },
-                        body: JSON.stringify({ chat_id: TG_CHAT_ID, text: msg, parse_mode: 'Markdown' })
-                    });
+                        body: JSON.stringify({
+                            chat_id: TG_CONFIG.chatId,
+                            text: msg,
+                            parse_mode: 'Markdown'
+                        })
+                    }).catch(err => console.error("TG Notify Error:", err));
 
-                    if (payUrl) window.location.href = payUrl; else location.reload();
-                } catch (e) { alert("報名出錯，請重試"); }
+                    // 4. 直接跳轉付款
+                    setTimeout(() => {
+                        if (payUrl) {
+                            window.location.href = payUrl;
+                        } else {
+                            alert("報名成功！已通知管理員。");
+                            location.reload();
+                        }
+                    }, 100); // 輕微延遲確保 fetch 已經發出
+
+                } catch (e) {
+                    alert("系統繁忙，請重試");
+                    console.error(e);
+                }
             },
+
             delGame: async (id) => { if(confirm("確定刪除？")) await deleteDoc(doc(db, "games", id)); },
             confirmP: async (gid, pid) => await updateDoc(doc(db, `games/${gid}/players`, pid), { status: "confirmed" }),
             delP: async (gid, pid) => await deleteDoc(doc(db, `games/${gid}/players`, pid)),
