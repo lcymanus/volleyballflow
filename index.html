@@ -14,13 +14,13 @@
 <body class="bg-slate-50 min-h-screen p-5 pb-20 text-slate-900 select-none">
     <div id="app-root" class="max-w-md mx-auto">
         <header class="mb-12 text-center">
-            <h1 class="text-4xl font-black italic tracking-tighter text-slate-900">VOLLEYFLOW</h1>
+            <h1 class="text-4xl font-black italic tracking-tighter text-slate-900 leading-none">VOLLEYFLOW</h1>
             <div id="admin-status" class="mt-4"></div>
         </header>
 
         <div id="admin-panel" class="hidden animate-fade-in">
             <div class="bg-white p-8 rounded-[40px] shadow-2xl mb-10 border-2 border-blue-50">
-                <h3 class="font-black text-sm mb-4 italic uppercase text-slate-800">Create New Game</h3>
+                <h3 class="font-black text-sm mb-4 italic uppercase text-slate-800 tracking-tighter">Create New Game</h3>
                 <div class="space-y-3">
                     <div class="flex items-center bg-slate-50 rounded-2xl px-4 border border-slate-100">
                         <input id="new_loc" type="text" placeholder="地方名 (如: 天水圍)" class="flex-1 bg-transparent py-4 outline-none font-bold text-sm text-slate-700">
@@ -29,8 +29,8 @@
                     <input id="new_date" type="date" class="w-full bg-slate-50 p-4 rounded-2xl border border-slate-100 outline-none font-bold text-sm text-slate-700">
                     <input id="new_time" type="text" placeholder="時間 (如: 19:00-21:00)" class="w-full bg-slate-50 p-4 rounded-2xl border border-slate-100 outline-none font-bold text-sm text-slate-700">
                     <div class="grid grid-cols-2 gap-2">
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-[10px] font-black text-slate-400">名額: <input id="new_max" type="number" value="15" class="bg-transparent text-slate-700 w-10"></div>
-                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-[10px] font-black text-slate-400">費用: <input id="new_price" type="number" value="30" class="bg-transparent text-slate-700 w-10"></div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-[10px] font-black text-slate-400 uppercase">名額: <input id="new_max" type="number" value="15" class="bg-transparent text-slate-700 w-10 outline-none"></div>
+                        <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-[10px] font-black text-slate-400 uppercase">費用: <input id="new_price" type="number" value="30" class="bg-transparent text-slate-700 w-10 outline-none"></div>
                     </div>
                     <button onclick="vflow.createGame()" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all uppercase tracking-widest text-xs">發布場次</button>
                     <div id="super-admin-tools" class="hidden mt-4">
@@ -44,24 +44,27 @@
             <div class="flex justify-center py-20"><div class="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-600"></div></div>
         </div>
 
-        <div id="login_modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6">
-            <div class="bg-white w-full max-w-xs p-8 rounded-[40px] shadow-2xl text-center">
-                <h3 class="font-black italic mb-6 text-slate-800">ADMIN LOGIN</h3>
-                <input id="login_u" type="text" placeholder="用戶名稱" class="w-full bg-slate-50 p-4 rounded-2xl mb-3 outline-none border font-bold">
-                <input id="login_p" type="password" placeholder="密碼" class="w-full bg-slate-50 p-4 rounded-2xl mb-6 outline-none border font-bold">
-                <button onclick="vflow.login()" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all">登入</button>
+        <div id="login_modal" class="hidden fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-6 text-center">
+            <div class="bg-white w-full max-w-xs p-8 rounded-[40px] shadow-2xl">
+                <h3 class="font-black italic mb-6 text-slate-800 uppercase tracking-tighter">Admin Login</h3>
+                <input id="login_u" type="text" placeholder="用戶名稱" class="w-full bg-slate-50 p-4 rounded-2xl mb-3 outline-none border border-slate-100 font-bold">
+                <input id="login_p" type="password" placeholder="密碼" class="w-full bg-slate-50 p-4 rounded-2xl mb-6 outline-none border border-slate-100 font-bold">
+                <button onclick="vflow.login()" class="w-full bg-blue-600 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all uppercase">登入</button>
                 <button onclick="vflow.closeLogin()" class="mt-4 text-slate-400 text-[10px] font-bold uppercase tracking-widest">Cancel</button>
             </div>
         </div>
 
         <footer class="mt-20 py-10 text-center opacity-20">
-            <div class="inline-block py-4 px-10" onclick="vflow.clickSecret()">
+            <div class="inline-block py-4 px-10 cursor-default" onclick="vflow.clickSecret()">
                 <p class="text-[9px] font-black uppercase tracking-[0.3em]">© 2026 VolleyFlow Collective</p>
             </div>
         </footer>
     </div>
 
     <script type="module">
+        // ==========================================
+        // 📦 [A 區：Firebase 初始化與配置]
+        // ==========================================
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc, setDoc, updateDoc, getDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -73,17 +76,22 @@
             messagingSenderId: "1032620495700",
             appId: "1:1032620495700:web:c2d84f02e435d99e15eec1"
         };
-
         const SUPER_ADMIN = { user: "Manusyip", pass: "Manusyip0830" };
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // ==========================================
+        // 🧠 [B 區：全局變數管理]
+        // ==========================================
         let user = JSON.parse(sessionStorage.getItem('vf_user'));
         let currentView = 'list';
         let payUrl = "";
         let selectedPositions = [];
         let secretClicks = 0;
 
+        // ==========================================
+        // 🛠️ [C 區：核心功能邏輯 (vflow)]
+        // ==========================================
         window.vflow = {
             clickSecret: () => {
                 secretClicks++;
@@ -112,43 +120,35 @@
                 const timeStr = document.getElementById('new_time').value.trim();
                 const max = parseInt(document.getElementById('new_max').value) || 15;
                 const price = parseInt(document.getElementById('new_price').value) || 30;
-
-                if (!loc || !dateVal || !timeStr) return alert("請填寫完整資訊");
-                if (!user) return alert("請先登入管理員");
-
+                if (!loc || !dateVal || !timeStr) return alert("資訊不完整");
                 const weekDay = ["日", "一", "二", "三", "四", "五", "六"][new Date(dateVal).getDay()];
                 try {
                     await addDoc(collection(db, "games"), {
                         location: `${loc}體育館`,
                         time: `${dateVal} (${weekDay}) ${timeStr}`,
-                        maxPlayers: max,
-                        price: price,
-                        createdBy: user.name,
-                        timestamp: serverTimestamp(),
-                        limits: { S: 2, OH: 4, MB: 2, OP: 2, L: 2 },
-                        enableLimit: false
+                        maxPlayers: max, price: price,
+                        createdBy: user.name, timestamp: serverTimestamp()
                     });
                     location.reload();
-                } catch (e) { alert("發佈失敗: " + e.message); }
+                } catch (e) { alert("發佈失敗"); }
             },
             addAdminAccount: async () => {
-                const u = prompt("新管理員用戶名:");
-                const p = prompt("新管理員密碼:");
+                const u = prompt("新管理員用戶名:"); const p = prompt("新管理員密碼:");
                 if (u && p) { await setDoc(doc(db, "admins", u), { username: u, password: p }); alert("新增成功"); }
             },
             renderList: (games) => {
                 const container = document.getElementById('main-content');
-                if (games.length === 0) { container.innerHTML = `<p class="text-center py-20 text-slate-400 font-bold italic">暫無場次</p>`; return; }
-                container.innerHTML = `<h2 class="text-xl font-black italic text-slate-700 mb-6 px-2">招募中場次</h2>
-                <div class="grid gap-4">${games.map(g => {
+                if (games.length === 0) { container.innerHTML = `<p class="text-center py-20 text-slate-400 font-bold italic uppercase tracking-widest">No Active Games</p>`; return; }
+                container.innerHTML = `<h2 class="text-xl font-black italic text-slate-700 mb-6 px-2 uppercase tracking-tight">Active Games</h2>
+                <div class="grid gap-4 animate-fade-in">${games.map(g => {
                     const canDelete = user?.role === 'super' || user?.name === g.createdBy;
-                    return `<div class="bg-white p-6 rounded-[30px] shadow-sm border border-slate-100 relative">
+                    return `<div class="bg-white p-6 rounded-[30px] shadow-sm border border-slate-100 relative active:scale-[0.98] transition-transform">
                         <div onclick="vflow.goToGame('${g.id}')" class="cursor-pointer">
-                            <p class="text-[10px] font-black text-blue-600 uppercase mb-1">${g.time}</p>
+                            <p class="text-[10px] font-black text-blue-600 uppercase mb-1 tracking-tighter">${g.time}</p>
                             <h3 class="text-xl font-black text-slate-800">${g.location}</h3>
-                            <p class="text-[9px] font-bold text-slate-300 mt-1">Host: ${g.createdBy || 'System'}</p>
+                            <p class="text-[9px] font-bold text-slate-300 mt-1 uppercase">Host: ${g.createdBy || 'System'}</p>
                         </div>
-                        ${canDelete ? `<button onclick="vflow.delGame('${g.id}')" class="absolute top-6 right-6 text-red-300 text-[10px] font-bold">剷場</button>` : ''}
+                        ${canDelete ? `<button onclick="vflow.delGame('${g.id}')" class="absolute top-6 right-6 text-red-200 hover:text-red-400 text-[10px] font-black uppercase">剷場</button>` : ''}
                     </div>`}).join('')}</div>`;
             },
             goToGame: (id) => {
@@ -158,24 +158,24 @@
                     const game = d.data();
                     const isMgr = user?.role === 'super' || user?.name === game.createdBy;
                     document.getElementById('main-content').innerHTML = `
-                        <button onclick="location.reload()" class="mb-6 text-blue-600 font-black text-xs">← BACK TO LIST</button>
-                        <div class="bg-slate-900 text-white p-8 rounded-[40px] mb-6 shadow-xl relative">
-                            <h2 class="text-2xl font-black italic mb-1">${game.location}</h2>
-                            <p class="text-sm font-bold opacity-50 font-mono">${game.time}</p>
-                            ${isMgr ? `<button onclick="vflow.copyWA('${id}','${game.location}','${game.time}')" class="absolute right-6 bottom-6 bg-blue-600 text-[10px] px-4 py-2 rounded-full font-black">複製 WA</button>` : ''}
+                        <button onclick="location.reload()" class="mb-6 text-blue-600 font-black text-xs uppercase tracking-widest">← Back</button>
+                        <div class="bg-slate-900 text-white p-8 rounded-[40px] mb-6 shadow-xl relative animate-fade-in">
+                            <h2 class="text-2xl font-black italic mb-1 uppercase tracking-tight">${game.location}</h2>
+                            <p class="text-xs font-bold opacity-40 font-mono tracking-tighter">${game.time}</p>
+                            ${isMgr ? `<button onclick="vflow.copyWA('${id}','${game.location}','${game.time}')" class="absolute right-6 bottom-6 bg-blue-600 text-[10px] px-4 py-2 rounded-full font-black uppercase">Copy WA</button>` : ''}
                         </div>
-                        ${isMgr ? `<div class="bg-blue-50 p-6 rounded-[30px] mb-6 border border-blue-100 text-xs">
-                            <div class="flex justify-between font-black mb-4"><span class="text-green-600">已收: <span id="stat-paid">$0</span></span><span class="text-blue-600">預計: <span id="stat-total">$0</span></span></div>
+                        ${isMgr ? `<div class="bg-blue-50 p-6 rounded-[30px] mb-6 border border-blue-100 text-[10px] font-black uppercase animate-fade-in">
+                            <div class="flex justify-between mb-4"><span class="text-green-600">已收: <span id="stat-paid">$0</span></span><span class="text-blue-600">預計: <span id="stat-total">$0</span></span></div>
                             <div class="flex flex-col gap-2 pt-3 border-t border-blue-100">
-                                <div>上限: <input type="number" value="${game.maxPlayers}" onchange="vflow.upField('${id}','maxPlayers',this.value)" class="w-12 p-1 rounded"></div>
-                                <div>費用: <input type="number" value="${game.price}" onchange="vflow.upField('${id}','price',this.value)" class="w-12 p-1 rounded"></div>
+                                <div class="flex justify-between items-center"><span>上限:</span><input type="number" value="${game.maxPlayers}" onchange="vflow.upField('${id}','maxPlayers',this.value)" class="w-12 p-1 rounded border-none bg-white text-center"></div>
+                                <div class="flex justify-between items-center"><span>費用:</span><input type="number" value="${game.price}" onchange="vflow.upField('${id}','price',this.value)" class="w-12 p-1 rounded border-none bg-white text-center"></div>
                             </div>
                         </div>` : ''}
-                        <div class="bg-white p-8 rounded-[30px] shadow-sm mb-6 border border-slate-100 text-center">
-                            <div class="flex justify-between items-center mb-6"><span class="font-black italic text-slate-400 text-sm">Booking</span><span id="p-count" class="text-blue-600 font-black text-[10px] bg-blue-50 px-3 py-1 rounded-full">已報名：0 / ${game.maxPlayers}</span></div>
-                            <input id="ig" type="text" placeholder="@Instagram_ID" class="w-full bg-slate-50 p-4 rounded-2xl mb-4 outline-none font-bold">
+                        <div class="bg-white p-8 rounded-[30px] shadow-sm mb-6 border border-slate-100 text-center animate-fade-in">
+                            <div class="flex justify-between items-center mb-6"><span class="font-black italic text-slate-400 text-[10px] uppercase tracking-widest">Booking</span><span id="p-count" class="text-blue-600 font-black text-[10px] bg-blue-50 px-3 py-1 rounded-full uppercase tracking-tighter italic">Loading...</span></div>
+                            <input id="ig" type="text" placeholder="@Instagram_ID" class="w-full bg-slate-50 p-4 rounded-2xl mb-4 outline-none font-bold border border-transparent focus:border-blue-100 transition-all text-sm">
                             <div id="pos-grid" class="grid grid-cols-1 gap-2 mb-8"></div>
-                            <button onclick="vflow.join('${id}', ${game.price})" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-xl">確認報名支付 $${game.price}</button>
+                            <button onclick="vflow.join('${id}', ${game.price})" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all uppercase tracking-widest">Confirm Booking $${game.price}</button>
                         </div>
                         <div id="player-list" class="space-y-2 pb-10"></div>
                     `;
@@ -188,45 +188,43 @@
                     snap.forEach(d => { const p = {id:d.id, ...d.data()}; players.push(p); if(p.status==='confirmed') paid++; });
                     if(document.getElementById('p-count')) document.getElementById('p-count').innerText = `已報名：${players.length} / ${gData.maxPlayers}`;
                     if(isMgr && document.getElementById('stat-paid')) {
-                        document.getElementById('stat-paid').innerText = `$${paid * gData.price}`;
-                        document.getElementById('stat-total').innerText = `$${players.length * gData.price}`;
+                        document.getElementById('stat-paid').innerText = `$${paid * (gData.price||30)}`;
+                        document.getElementById('stat-total').innerText = `$${players.length * (gData.price||30)}`;
                     }
                     const grid = document.getElementById('pos-grid');
                     if(grid) {
                         grid.innerHTML = ['Setter','Outside Hitter','Middle Blocker','Opposite Hitter','Libero'].map(p => {
                             const isSel = selectedPositions.includes(p);
-                            return `<button onclick="vflow.setPos('${p}')" class="p-4 rounded-2xl border font-black text-xs ${isSel?'bg-blue-600 text-white':'bg-slate-50'}">${p.toUpperCase()}</button>`
+                            return `<button onclick="vflow.setPos('${p}')" class="p-4 rounded-2xl border font-black text-[10px] transition-all uppercase tracking-tighter ${isSel?'bg-blue-600 text-white shadow-lg border-blue-600':'bg-slate-50 text-slate-400 border-transparent'}">${p}</button>`
                         }).join('');
                     }
                     const listDiv = document.getElementById('player-list');
                     if(isMgr) {
-                        listDiv.innerHTML = players.map(p => `<div class="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm">
-                            <div><p class="font-black text-slate-800">${p.ig}</p><p class="text-[9px] font-black ${p.status==='confirmed'?'text-green-500':'text-orange-400'}">${p.status==='confirmed'?'● PAID':'○ PENDING'}</p></div>
-                            <div class="flex gap-1"><button onclick="vflow.confirmP('${gid}','${p.id}')" class="bg-green-500 text-white px-3 py-2 rounded-xl text-[10px] font-black">核實</button><button onclick="vflow.delP('${gid}','${p.id}')" class="bg-red-50 text-red-400 px-3 py-2 rounded-xl text-[10px] font-black">刪除</button></div>
+                        listDiv.innerHTML = players.map(p => `<div class="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm animate-fade-in">
+                            <div><p class="font-black text-slate-800 text-sm">${p.ig}</p><p class="text-[8px] font-black ${p.status==='confirmed'?'text-green-500':'text-orange-400'} uppercase">${p.status==='confirmed'?'● Paid':'○ Pending'} - ${p.pos}</p></div>
+                            <div class="flex gap-1"><button onclick="vflow.confirmP('${gid}','${p.id}')" class="bg-green-500 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase">核實</button><button onclick="vflow.delP('${gid}','${p.id}')" class="bg-red-50 text-red-400 px-3 py-2 rounded-xl text-[9px] font-black uppercase">刪除</button></div>
                         </div>`).join('');
-                    } else { listDiv.innerHTML = `<p class="py-10 text-center text-slate-300 text-[10px] italic tracking-widest">Privacy List Secured</p>`; }
+                    } else { listDiv.innerHTML = `<p class="py-10 text-center text-slate-300 text-[10px] font-black uppercase italic tracking-[0.4em]">Privacy List Secured</p>`; }
                 });
             },
             setPos: (p) => {
                 const idx = selectedPositions.indexOf(p);
                 if(idx > -1) selectedPositions.splice(idx, 1);
                 else if(selectedPositions.length < 2) selectedPositions.push(p);
-                // 為了讓 UI 更新，這裡簡單做法是重新跑一遍渲染
-                const btns = document.querySelectorAll('#pos-grid button');
-                btns.forEach(b => {
-                    const name = b.innerText;
-                    if(selectedPositions.includes(name)) { b.classList.add('bg-blue-600','text-white'); b.classList.remove('bg-slate-50'); }
-                    else { b.classList.remove('bg-blue-600','text-white'); b.classList.add('bg-slate-50'); }
+                document.querySelectorAll('#pos-grid button').forEach(b => {
+                    const bName = b.innerText;
+                    if(selectedPositions.includes(bName.charAt(0).toUpperCase() + bName.slice(1).toLowerCase())) { b.className = "p-4 rounded-2xl border font-black text-[10px] transition-all uppercase tracking-tighter bg-blue-600 text-white shadow-lg border-blue-600"; }
+                    else { b.className = "p-4 rounded-2xl border font-black text-[10px] transition-all uppercase tracking-tighter bg-slate-50 text-slate-400 border-transparent"; }
                 });
             },
             join: async (gid, pr) => {
                 const ig = document.getElementById('ig').value.trim();
-                if(!ig.startsWith('@') || selectedPositions.length === 0) return alert("請輸入 IG (@開頭) 並選擇位置");
-                if(!confirm(`確認支付 $${pr} 報名？`)) return;
+                if(!ig.startsWith('@') || selectedPositions.length === 0) return alert("資料有誤");
+                if(!confirm(`確認報名？`)) return;
                 await addDoc(collection(db, `games/${gid}/players`), { ig, pos: selectedPositions.join(' & '), status: "pending", timestamp: serverTimestamp() });
                 window.open(payUrl, "_blank"); location.reload();
             },
-            delGame: async (id) => { if(confirm("刪除場次？")) await deleteDoc(doc(db, "games", id)); },
+            delGame: async (id) => { if(confirm("確定刪除？")) await deleteDoc(doc(db, "games", id)); },
             confirmP: async (gid, pid) => await updateDoc(doc(db, `games/${gid}/players`, pid), { status: "confirmed" }),
             delP: async (gid, pid) => await deleteDoc(doc(db, `games/${gid}/players`, pid)),
             upField: async (id, f, v) => await updateDoc(doc(db, "games", id), { [f]: parseInt(v) }),
@@ -234,16 +232,18 @@
                 const snap = await getDocs(query(collection(db, `games/${gid}/players`), orderBy("timestamp", "asc")));
                 let txt = `🏐 *VolleyFlow 名單*\n📍 地點：${loc}\n⏰ 時間：${time}\n\n`;
                 let i = 1; snap.forEach(d => { const p = d.data(); txt += `${i}. ${p.ig} (${p.pos}) ${p.status==='confirmed'?'✅':'⏳'}\n`; i++; });
-                navigator.clipboard.writeText(txt); alert("已複製！");
+                navigator.clipboard.writeText(txt); alert("名單已複製！");
             }
         };
 
+        // ==========================================
+        // 🚀 [D 區：初始化啟動器 (Launcher)]
+        // ==========================================
         if (user) {
-            document.getElementById('admin-status').innerHTML = `<div class="mt-4 flex justify-center gap-2 items-center"><span class="text-[10px] font-black bg-blue-100 text-blue-600 px-3 py-1 rounded-full">ADMIN: ${user.name}</span><button onclick="sessionStorage.removeItem('vf_user');location.reload();" class="text-[10px] font-black text-red-400 underline">Logout</button></div>`;
+            document.getElementById('admin-status').innerHTML = `<div class="mt-4 flex justify-center gap-2 items-center"><span class="text-[10px] font-black bg-blue-100 text-blue-600 px-3 py-1 rounded-full uppercase tracking-tighter italic">Admin: ${user.name}</span><button onclick="sessionStorage.removeItem('vf_user');location.reload();" class="text-[10px] font-black text-red-400 underline uppercase tracking-widest">Logout</button></div>`;
             document.getElementById('admin-panel').classList.remove('hidden');
             if(user.role === 'super') document.getElementById('super-admin-tools').classList.remove('hidden');
         }
-
         onSnapshot(doc(db, "settings", "global"), (d) => { if(d.exists()) payUrl = d.data().payUrl; });
         onSnapshot(query(collection(db, "games"), orderBy("timestamp", "desc")), (snap) => {
             const games = []; snap.forEach(d => games.push({id: d.id, ...d.data()}));
