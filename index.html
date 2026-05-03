@@ -9,26 +9,43 @@
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc, setDoc, updateDoc, getDoc, getDocs } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
+        // --- [更新區 1: 基礎配置] ---
         const firebaseConfig = {
-          apiKey: "AIzaSyBTd2xfvfNxoaD9irEx-W4B5gptzC-Mon0",
-          authDomain: "volleyballflow-7cf02.firebaseapp.com",
-          projectId: "volleyballflow-7cf02",
-          storageBucket: "volleyballflow-7cf02.firebasestorage.app",
-          messagingSenderId: "1032620495700",
-          appId: "1:1032620495700:web:c2d84f02e435d99e15eec1",
-          measurementId: "G-Z5FCYXRT4M"
+            apiKey: "AIzaSyBTd2xfvfNxoaD9irEx-W4B5gptzC-Mon0",
+            authDomain: "volleyballflow-7cf02.firebaseapp.com",
+            projectId: "volleyballflow-7cf02",
+            storageBucket: "volleyballflow-7cf02.firebasestorage.app",
+            messagingSenderId: "1032620495700",
+            appId: "1:1032620495700:web:c2d84f02e435d99e15eec1",
+            measurementId: "G-Z5FCYXRT4M"
         };
 
+        const ADMIN_PASSWORD = "Manusyip0830";
+        const DEFAULT_GAME_PRICE = 30; // 統一管理價格
+        const MAX_PLAYERS_DEFAULT = 15; // 預設總人數上限
+
+        // --- [更新區 2: 排球位置定義] ---
+        // 如果想改簡寫或全名，喺度改一次就會全線更新
+        const POS_MAP = {
+            'Setter': 'S',
+            'Outside Hitter': 'OH',
+            'Middle Blocker': 'MB',
+            'Opposite Hitter': 'OP',
+            'Libero': 'L'
+        };
+
+        // -----------------------------------------
+        // 核心邏輯 (Logic Section)
+        // -----------------------------------------
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
-        const ADMIN_PASSWORD = "Manusyip0830"; 
-
         let isAdmin = sessionStorage.getItem('vf_admin') === 'true';
         let currentView = 'list';
         let selectedPositions = [];
         let payUrl = "";
+        let gameUnsubscribe = null; // 用嚟清空監聽，避免重複
 
-        // 🤫 底部隱藏入口：連撳「2026」4下
+        // 秘密入口邏輯
         let bottomClickCount = 0;
         let bottomTimer;
         window.bottomSecret = () => {
@@ -45,14 +62,17 @@
             bottomTimer = setTimeout(() => { bottomClickCount = 0; }, 3000);
         };
 
-        onSnapshot(doc(db, "settings", "global"), (d) => {
-            if (d.exists()) {
-                payUrl = d.data().payUrl;
-                if(document.getElementById('current_pay_url')) document.getElementById('current_pay_url').value = payUrl;
-            }
-        });
-
+        // 初始化與監聽
         function initApp() {
+            // 全域支付連結監聽
+            onSnapshot(doc(db, "settings", "global"), (d) => {
+                if (d.exists()) {
+                    payUrl = d.data().payUrl;
+                    if(document.getElementById('current_pay_url')) document.getElementById('current_pay_url').value = payUrl;
+                }
+            });
+
+            // 列表監聽
             onSnapshot(query(collection(db, "games"), orderBy("timestamp", "desc")), (snapshot) => {
                 const games = [];
                 snapshot.forEach(d => games.push({id: d.id, ...d.data()}));
@@ -60,6 +80,11 @@
             });
         }
 
+        // -----------------------------------------
+        // 模板渲染 (UI Templates)
+        // -----------------------------------------
+
+        // 渲染主列表
         function renderGameList(games) {
             const container = document.getElementById('main-content');
             container.innerHTML = `
@@ -81,9 +106,12 @@
             `;
         }
 
+        // 渲染場次詳情
         window.goToGame = (id) => {
             currentView = 'details';
-            onSnapshot(doc(db, "games", id), (d) => {
+            if (gameUnsubscribe) gameUnsubscribe(); // 清除舊監聽
+
+            gameUnsubscribe = onSnapshot(doc(db, "games", id), (d) => {
                 if (!d.exists()) return;
                 const game = d.data();
                 const limits = game.limits || { S: 2, OH: 4, MB: 2, OP: 2, L: 2 };
@@ -91,6 +119,7 @@
 
                 document.getElementById('main-content').innerHTML = `
                     <button onclick="window.location.reload()" class="mb-6 text-blue-600 font-black text-xs">← BACK TO LIST</button>
+                    
                     <div class="bg-slate-900 text-white p-8 rounded-[40px] mb-6 shadow-xl relative overflow-hidden">
                         <div class="relative z-10">
                             <h2 id="game-loc" class="text-2xl font-black italic mb-1">${game.location}</h2>
@@ -99,47 +128,62 @@
                         ${isAdmin ? `<button onclick="copyWA('${id}')" class="absolute right-6 bottom-6 bg-blue-600 text-[10px] px-4 py-2 rounded-full font-black shadow-lg">複製 WA 名單</button>` : ''}
                     </div>
 
-                    ${isAdmin ? `
-                        <div class="bg-blue-50 p-6 rounded-[30px] mb-6 border border-blue-100 animate-fade-in text-xs">
-                            <h4 class="font-black text-blue-800 mb-3 uppercase tracking-widest">Admin Dashboard</h4>
-                            <div class="flex justify-between mb-4 font-bold text-slate-600 px-1">
-                                <span>核實收入: <span id="income-paid" class="text-green-600 font-black">$0</span></span>
-                                <span>預計總額: <span id="income-total" class="text-blue-600 font-black">$0</span></span>
-                            </div>
-                            <div class="space-y-3 pt-3 border-t border-blue-100">
-                                <label class="flex items-center gap-2 font-bold cursor-pointer text-blue-700 italic">
-                                    <input type="checkbox" id="limit-toggle" ${enableLimit ? 'checked' : ''} onchange="toggleLimit('${id}')"> 啟用位置上限限制
-                                </label>
-                                <div class="grid grid-cols-5 gap-1 text-[9px] font-black">
-                                    ${['S','OH','MB','OP','L'].map(p => `
-                                        <div>${p}<input type="number" id="lim-${p}" value="${limits[p]}" onchange="updateLimit('${id}', '${p}')" class="w-full p-1 rounded border border-blue-200 mt-1"></div>
-                                    `).join('')}
-                                </div>
-                            </div>
-                        </div>
-                    ` : ''}
+                    ${isAdmin ? renderAdminDashboard(id, game, limits, enableLimit) : ''}
 
                     <div class="bg-white p-8 rounded-[30px] shadow-sm mb-6 border border-slate-100">
                         <div class="flex justify-between items-center mb-6">
                             <h2 class="font-black italic text-slate-400 text-sm tracking-widest uppercase">Booking Form</h2>
-                            <span id="count" class="text-blue-600 font-black text-[10px] bg-blue-50 px-3 py-1 rounded-full uppercase tracking-tighter">已報名：0 / 15</span>
+                            <span id="count" class="text-blue-600 font-black text-[10px] bg-blue-50 px-3 py-1 rounded-full uppercase tracking-tighter">載入中...</span>
                         </div>
                         <input id="ig" type="text" placeholder="@Instagram_ID" class="w-full bg-slate-50 p-4 rounded-2xl mb-4 outline-none font-bold border border-transparent focus:border-blue-400 transition-all">
                         <p class="text-[9px] font-black text-slate-400 mb-3 px-1 uppercase tracking-widest text-center">Select Positions (Max 2)</p>
+                        
                         <div id="pos-grid" class="grid grid-cols-1 gap-2 mb-8"></div>
-                        <div class="bg-red-50 p-4 rounded-2xl mb-6 border border-red-100 text-center"><p class="text-red-500 text-[11px] font-black italic">⚠️ 支付備註必須填寫 IG 名</p></div>
-                        <button onclick="joinGame('${id}')" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all">確認報名並支付 $30</button>
+                        
+                        <div class="bg-red-50 p-4 rounded-2xl mb-6 border border-red-100 text-center">
+                            <p class="text-red-500 text-[11px] font-black italic">⚠️ 支付備註必須填寫 IG 名</p>
+                        </div>
+                        <button onclick="joinGame('${id}')" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all">確認報名並支付 $${DEFAULT_GAME_PRICE}</button>
                     </div>
+
                     <div id="player-list" class="space-y-2 pb-10"></div>
                 `;
                 listenToPlayers(id, limits, enableLimit);
             });
         };
 
+        // --- [更新區 3: 管理員 Dashboard 模板] ---
+        function renderAdminDashboard(id, game, limits, enableLimit) {
+            return `
+                <div class="bg-blue-50 p-6 rounded-[30px] mb-6 border border-blue-100 animate-fade-in text-xs">
+                    <h4 class="font-black text-blue-800 mb-3 uppercase tracking-widest">Admin Dashboard</h4>
+                    <div class="flex justify-between mb-4 font-bold text-slate-600 px-1">
+                        <span>核實收入: <span id="income-paid" class="text-green-600 font-black">$0</span></span>
+                        <span>預計總額: <span id="income-total" class="text-blue-600 font-black">$0</span></span>
+                    </div>
+                    <div class="space-y-3 pt-3 border-t border-blue-100">
+                        <label class="flex items-center gap-2 font-bold cursor-pointer text-blue-700 italic">
+                            <input type="checkbox" id="limit-toggle" ${enableLimit ? 'checked' : ''} onchange="toggleLimit('${id}')"> 啟用位置上限限制
+                        </label>
+                        <div class="grid grid-cols-5 gap-1 text-[9px] font-black">
+                            ${Object.values(POS_MAP).map(p => `
+                                <div>${p}<input type="number" id="lim-${p}" value="${limits[p] || 0}" onchange="updateLimit('${id}', '${p}')" class="w-full p-1 rounded border border-blue-200 mt-1"></div>
+                            `).join('')}
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+
+        // -----------------------------------------
+        // 功能按鈕函數 (Functions Section)
+        // -----------------------------------------
         function listenToPlayers(gameId, limits, enableLimit) {
             onSnapshot(query(collection(db, `games/${gameId}/players`), orderBy("timestamp", "asc")), (snapshot) => {
                 const players = [];
-                const posCount = { 'Setter': 0, 'Outside Hitter': 0, 'Middle Blocker': 0, 'Opposite Hitter': 0, 'Libero': 0 };
+                const posCount = {};
+                Object.keys(POS_MAP).forEach(k => posCount[k] = 0);
+                
                 let paidCount = 0;
                 snapshot.forEach(d => {
                     const p = {id: d.id, ...d.data()};
@@ -148,35 +192,53 @@
                     p.pos.split(' & ').forEach(posName => { if(posCount[posName] !== undefined) posCount[posName]++; });
                 });
 
-                // ✅ 修改這裡：更新人數時保持文字
-                if(document.getElementById('count')) document.getElementById('count').innerText = `已報名：${players.length} / 15`;
+                if(document.getElementById('count')) document.getElementById('count').innerText = `已報名：${players.length} / ${MAX_PLAYERS_DEFAULT}`;
                 
                 if(isAdmin) {
-                    document.getElementById('income-paid').innerText = `$${paidCount * 30}`;
-                    document.getElementById('income-total').innerText = `$${players.length * 30}`;
+                    document.getElementById('income-paid').innerText = `$${paidCount * DEFAULT_GAME_PRICE}`;
+                    document.getElementById('income-total').innerText = `$${players.length * DEFAULT_GAME_PRICE}`;
                 }
 
-                const posMapping = { 'Setter':'S', 'Outside Hitter':'OH', 'Middle Blocker':'MB', 'Opposite Hitter':'OP', 'Libero':'L' };
+                // 渲染位置按鈕
                 const grid = document.getElementById('pos-grid');
                 if(grid) {
-                    grid.innerHTML = Object.entries(posMapping).map(([full, short]) => {
+                    grid.innerHTML = Object.entries(POS_MAP).map(([full, short]) => {
                         const current = posCount[full] || 0;
                         const max = limits[short] || 99;
                         const isFull = enableLimit && current >= max;
                         const isSel = selectedPositions.includes(full);
-                        return `<button onclick="setPos('${full}')" data-val="${full}" ${isFull && !isSel ? 'disabled' : ''} class="pos-btn border p-4 rounded-2xl font-black text-xs transition-all flex justify-between items-center ${isSel ? 'bg-blue-600 text-white border-blue-600 shadow-md' : (isFull ? 'bg-slate-200 text-slate-400 cursor-not-allowed border-transparent' : 'bg-slate-50 border-slate-100 text-slate-700')}"><span>${full.toUpperCase()}</span><span class="opacity-50 text-[10px]">${enableLimit ? `${current}/${max}` : ''}</span></button>`;
+                        return `
+                            <button onclick="setPos('${full}')" data-val="${full}" ${isFull && !isSel ? 'disabled' : ''} 
+                                class="pos-btn border p-4 rounded-2xl font-black text-xs transition-all flex justify-between items-center 
+                                ${isSel ? 'bg-blue-600 text-white border-blue-600 shadow-md' : (isFull ? 'bg-slate-200 text-slate-400 cursor-not-allowed border-transparent' : 'bg-slate-50 border-slate-100 text-slate-700')}">
+                                <span>${full.toUpperCase()}</span>
+                                <span class="opacity-50 text-[10px]">${enableLimit ? `${current}/${max}` : ''}</span>
+                            </button>`;
                     }).join('');
                 }
 
+                // 渲染球員名單 (僅限 Admin)
                 const listDiv = document.getElementById('player-list');
                 if (isAdmin) {
                     listDiv.innerHTML = players.map(p => `
                         <div class="bg-white p-4 rounded-2xl border border-slate-100 shadow-sm animate-fade-in">
                             <div class="flex justify-between items-start mb-3">
-                                <div class="flex flex-col"><span class="font-black text-slate-800">${p.ig}</span><span class="text-[10px] text-blue-600 font-bold uppercase tracking-tighter">${p.pos}</span><span class="text-[9px] font-black ${p.status === 'confirmed' ? 'text-green-500' : 'text-orange-400'} uppercase mt-1">${p.status === 'confirmed' ? '● 已核實 Paid' : '○ 等待中 Pending'}</span></div>
-                                <div class="flex gap-1"><button onclick="confirmPlayer('${gameId}', '${p.id}')" class="bg-green-500 text-white px-3 py-2 rounded-xl text-[10px] font-black">確認</button><button onclick="deletePlayer('${gameId}', '${p.id}')" class="bg-red-50 text-red-400 px-3 py-2 rounded-xl text-[10px] font-black">剷除</button></div>
+                                <div class="flex flex-col">
+                                    <span class="font-black text-slate-800">${p.ig}</span>
+                                    <span class="text-[10px] text-blue-600 font-bold uppercase tracking-tighter">${p.pos}</span>
+                                    <span class="text-[9px] font-black ${p.status === 'confirmed' ? 'text-green-500' : 'text-orange-400'} uppercase mt-1">
+                                        ${p.status === 'confirmed' ? '● 已核實 Paid' : '○ 等待中 Pending'}
+                                    </span>
+                                </div>
+                                <div class="flex gap-1">
+                                    <button onclick="confirmPlayer('${gameId}', '${p.id}')" class="bg-green-500 text-white px-3 py-2 rounded-xl text-[10px] font-black">確認</button>
+                                    <button onclick="deletePlayer('${gameId}', '${p.id}')" class="bg-red-50 text-red-400 px-3 py-2 rounded-xl text-[10px] font-black">剷除</button>
+                                </div>
                             </div>
-                            <div class="flex gap-2 items-center bg-slate-50 p-2 rounded-xl"><input id="note-${p.id}" type="text" value="${p.note || ''}" placeholder="內部備註" class="flex-1 text-[10px] bg-transparent outline-none font-bold text-slate-500"><button onclick="saveNote('${gameId}', '${p.id}')" class="text-[10px] font-black text-blue-500 px-2">儲存</button></div>
+                            <div class="flex gap-2 items-center bg-slate-50 p-2 rounded-xl">
+                                <input id="note-${p.id}" type="text" value="${p.note || ''}" placeholder="內部備註" class="flex-1 text-[10px] bg-transparent outline-none font-bold text-slate-500">
+                                <button onclick="saveNote('${gameId}', '${p.id}')" class="text-[10px] font-black text-blue-500 px-2">儲存</button>
+                            </div>
                         </div>`).join('');
                 } else {
                     listDiv.innerHTML = `<p class="py-12 text-center text-slate-300 text-[10px] font-black tracking-[0.4em] uppercase italic">Privacy List Secured</p>`;
@@ -184,12 +246,31 @@
             });
         }
 
+        // --- 視窗綁定函數 (Firebase 操作) ---
         window.updateLimit = async (gid, pos) => { const val = parseInt(document.getElementById(`lim-${pos}`).value); const d = await getDoc(doc(db, "games", gid)); const limits = d.data().limits || {}; limits[pos] = val; await updateDoc(doc(db, "games", gid), { limits }); };
         window.toggleLimit = async (gid) => { const checked = document.getElementById('limit-toggle').checked; await updateDoc(doc(db, "games", gid), { enableLimit: checked }); };
         window.saveNote = async (gid, pid) => { const note = document.getElementById(`note-${pid}`).value; await updateDoc(doc(db, `games/${gid}/players`, pid), { note }); };
-        window.copyWA = async (gid) => { const loc = document.getElementById('game-loc').innerText; const time = document.getElementById('game-time').innerText; const snap = await getDocs(query(collection(db, `games/${gid}/players`), orderBy("timestamp", "asc"))); let text = `🏐 *VolleyFlow 報名表*\n📍 地點：${loc}\n⏰ 時間：${time}\n\n`; let i = 1; snap.forEach(d => { const p = d.data(); text += `${i}. ${p.ig} (${p.pos}) ${p.status === 'confirmed' ? '✅' : '⏳'}\n`; i++; }); navigator.clipboard.writeText(text); alert("WhatsApp 格式名單已複製！"); };
-        window.updateGlobalSettings = async () => { const newUrl = document.getElementById('current_pay_url').value; await setDoc(doc(db, "settings", "global"), { payUrl: newUrl }); alert("支付連結已更新！"); };
-        window.createGame = async () => { const loc = document.getElementById('new_loc').value; const time = document.getElementById('new_time').value; if(!loc || !time) return; await addDoc(collection(db, "games"), { location: loc, time: time, timestamp: serverTimestamp(), limits: { S: 2, OH: 4, MB: 2, OP: 2, L: 2 }, enableLimit: false }); document.getElementById('new_loc').value = ""; document.getElementById('new_time').value = ""; };
+        window.copyWA = async (gid) => { 
+            const loc = document.getElementById('game-loc').innerText; 
+            const time = document.getElementById('game-time').innerText; 
+            const snap = await getDocs(query(collection(db, `games/${gid}/players`), orderBy("timestamp", "asc"))); 
+            let text = `🏐 *VolleyFlow 報名表*\n📍 地點：${loc}\n⏰ 時間：${time}\n\n`; 
+            let i = 1; 
+            snap.forEach(d => { const p = d.data(); text += `${i}. ${p.ig} (${p.pos}) ${p.status === 'confirmed' ? '✅' : '⏳'}\n`; i++; }); 
+            navigator.clipboard.writeText(text); alert("WhatsApp 格式名單已複製！"); 
+        };
+        window.updateGlobalSettings = async () => { const newUrl = document.getElementById('current_pay_url').value; await setDoc(doc(doc(db, "settings", "global")), { payUrl: newUrl }); alert("支付連結已更新！"); };
+        window.createGame = async () => { 
+            const loc = document.getElementById('new_loc').value; 
+            const time = document.getElementById('new_time').value; 
+            if(!loc || !time) return; 
+            await addDoc(collection(db, "games"), { 
+                location: loc, time: time, timestamp: serverTimestamp(), 
+                limits: { S: 2, OH: 4, MB: 2, OP: 2, L: 2 }, 
+                enableLimit: false 
+            }); 
+            document.getElementById('new_loc').value = ""; document.getElementById('new_time').value = ""; 
+        };
         window.deleteEntireGame = async (id) => { if(confirm("確定刪除此場次？")) await deleteDoc(doc(db, "games", id)); };
         window.confirmPlayer = async (gid, pid) => await updateDoc(doc(db, `games/${gid}/players`, pid), { status: "confirmed" });
         window.deletePlayer = async (gid, pid) => await deleteDoc(doc(db, `games/${gid}/players`, pid));
@@ -199,19 +280,27 @@
             const idx = selectedPositions.indexOf(p);
             if (idx > -1) selectedPositions.splice(idx, 1);
             else if (selectedPositions.length < 2) selectedPositions.push(p);
+            
             document.querySelectorAll('.pos-btn').forEach(b => {
                 const val = b.getAttribute('data-val');
-                const isSel = selectedPositions.includes(val);
-                if (isSel) { b.classList.add('bg-blue-600', 'text-white', 'border-blue-600'); b.classList.remove('bg-slate-50', 'text-slate-700'); }
-                else { b.classList.remove('bg-blue-600', 'text-white', 'border-blue-600'); b.classList.add('bg-slate-50', 'text-slate-700'); }
+                if (selectedPositions.includes(val)) {
+                    b.classList.add('bg-blue-600', 'text-white', 'border-blue-600');
+                    b.classList.remove('bg-slate-50', 'text-slate-700');
+                } else {
+                    b.classList.remove('bg-blue-600', 'text-white', 'border-blue-600');
+                    b.classList.add('bg-slate-50', 'text-slate-700');
+                }
             });
         };
 
         window.joinGame = async (gameId) => {
             const ig = document.getElementById('ig').value.trim();
             if(!ig.startsWith('@') || ig.length < 4 || selectedPositions.length === 0) return alert("請填寫正確 IG (@開頭) 並選擇位置！");
-            if(!confirm("確認：你已清楚支付時必須在「備註」寫下 IG 名？")) return;
-            await addDoc(collection(db, `games/${gameId}/players`), { ig, pos: selectedPositions.join(' & '), status: "pending", timestamp: serverTimestamp(), note: "" });
+            if(!confirm(`確認：你已清楚支付時必須在「備註」寫下 IG 名？\n金額為 $${DEFAULT_GAME_PRICE}`)) return;
+            await addDoc(collection(db, `games/${gameId}/players`), { 
+                ig, pos: selectedPositions.join(' & '), 
+                status: "pending", timestamp: serverTimestamp(), note: "" 
+            });
             window.open(payUrl, "_blank");
             location.reload();
         };
@@ -221,10 +310,10 @@
     <style>
         @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
         .animate-fade-in { animation: fadeIn 0.4s ease-out forwards; }
-        body { -webkit-tap-highlight-color: transparent; }
+        body { -webkit-tap-highlight-color: transparent; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif; }
     </style>
 </head>
-<body class="bg-slate-50 min-h-screen p-5 pb-20 text-slate-900 font-sans select-none">
+<body class="bg-slate-50 min-h-screen p-5 pb-20 text-slate-900 select-none">
     <div class="max-w-md mx-auto">
         <header class="mb-12 text-center">
             <h1 class="text-4xl font-black italic tracking-tighter text-slate-900 leading-none">VOLLEYFLOW</h1>
@@ -233,7 +322,10 @@
 
         <div id="admin-panel" class="hidden space-y-4 mb-10 animate-fade-in">
             <div class="bg-white p-8 rounded-[40px] shadow-2xl border-2 border-blue-50">
-                <div class="flex justify-between items-center mb-6"><h3 class="font-black text-slate-800 italic uppercase text-sm">Create New Game</h3><button onclick="logoutAdmin()" class="text-[10px] font-black text-red-400 underline uppercase">Logout</button></div>
+                <div class="flex justify-between items-center mb-6">
+                    <h3 class="font-black text-slate-800 italic uppercase text-sm">Create New Game</h3>
+                    <button onclick="logoutAdmin()" class="text-[10px] font-black text-red-400 underline uppercase">Logout</button>
+                </div>
                 <input id="new_loc" type="text" placeholder="場地名稱" class="w-full bg-slate-50 p-4 rounded-2xl mb-2 outline-none border border-slate-100 font-bold text-sm text-slate-700">
                 <input id="new_time" type="text" placeholder="日期時間" class="w-full bg-slate-50 p-4 rounded-2xl mb-4 outline-none border border-slate-100 font-bold text-sm text-slate-700">
                 <button onclick="createGame()" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all uppercase tracking-widest text-xs">發布場次</button>
@@ -259,6 +351,7 @@
     </div>
 
     <script>
+        // 檢查登入狀態顯示面板
         if (sessionStorage.getItem('vf_admin') === 'true') {
             document.getElementById('admin-panel').classList.remove('hidden');
         }
