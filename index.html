@@ -284,15 +284,38 @@
                 });
             },
 
-            join: async (gid, pr) => {
-                const ig = document.getElementById('ig').value.trim();
-                if(!ig.startsWith('@')) return alert("IG 需以 @ 開頭");
-                if(selectedPositions.length < 1 || selectedPositions.length > 2) return alert("請選擇 1 至 2 個位置");
-                if(!confirm(`確認支付 $${pr} 報名？`)) return;
-                await addDoc(collection(db, `games/${gid}/players`), { ig, pos: selectedPositions.join(' & '), status: "pending", timestamp: serverTimestamp() });
-                window.open(payUrl, "_blank"); location.reload();
-            },
+           join: async (gid, pr) => {
+    const ig = document.getElementById('ig').value.trim();
+    
+    // 1. 檢查輸入
+    if(!ig.startsWith('@')) return alert("IG 需以 @ 開頭");
+    if(selectedPositions.length < 1 || selectedPositions.length > 2) return alert("請選擇 1 至 2 個位置");
+    
+    // 2. 確認報名
+    if(!confirm(`確認支付 $${pr} 報名？\n按下「確定」後將會前往付款頁面。`)) return;
+    
+    try {
+        // 3. 先寫入資料到 Firebase
+        await addDoc(collection(db, `games/${gid}/players`), { 
+            ig, 
+            pos: selectedPositions.join(' & '), 
+            status: "pending", 
+            timestamp: serverTimestamp() 
+        });
 
+        // 4. 跳轉付款連結
+        // 手機版建議用 location.href 替代 window.open 以免被攔截
+        if (payUrl) {
+            window.location.href = payUrl; 
+        } else {
+            alert("報名成功！(管理員暫未設置付款連結)");
+            location.reload();
+        }
+    } catch (e) {
+        console.error(e);
+        alert("報名失敗，請檢查網絡連線");
+    }
+},
             delGame: async (id) => { if(confirm("確定刪除場次？")) await deleteDoc(doc(db, "games", id)); },
             confirmP: async (gid, pid) => await updateDoc(doc(db, `games/${gid}/players`, pid), { status: "confirmed" }),
             delP: async (gid, pid) => await deleteDoc(doc(db, `games/${gid}/players`, pid)),
