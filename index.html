@@ -33,8 +33,12 @@
                         <div class="bg-slate-50 p-4 rounded-2xl border border-slate-100 text-[10px] font-black text-slate-400 uppercase">費用: <input id="new_price" type="number" value="30" class="bg-transparent text-slate-700 w-10 outline-none"></div>
                     </div>
                     <button onclick="vflow.createGame()" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all uppercase tracking-widest text-xs">發布場次</button>
-                    <div id="super-admin-tools" class="hidden mt-4">
-                        <button onclick="vflow.addAdminAccount()" class="w-full border-2 border-slate-900 text-slate-900 font-black py-2 rounded-2xl text-[10px] uppercase tracking-widest">＋ 新增管理員帳號</button>
+                    
+                    <div id="super-admin-tools" class="hidden mt-6 pt-6 border-t border-slate-100 text-center">
+                        <p class="text-[10px] font-black text-slate-400 mb-4 uppercase tracking-[0.2em]">Super Admin Console</p>
+                        <button onclick="vflow.addAdminAccount()" class="w-full border-2 border-slate-900 text-slate-900 font-black py-3 rounded-2xl text-[10px] uppercase tracking-widest active:bg-slate-900 active:text-white transition-all">＋ 新增管理員帳號</button>
+                        <div id="admin-list-container" class="mt-4 space-y-2 text-left">
+                            </div>
                     </div>
                 </div>
             </div>
@@ -132,10 +136,42 @@
                     location.reload();
                 } catch (e) { alert("發佈失敗"); }
             },
+            
+            // --- 超級管理員專屬功能 ---
             addAdminAccount: async () => {
-                const u = prompt("新管理員用戶名:"); const p = prompt("新管理員密碼:");
-                if (u && p) { await setDoc(doc(db, "admins", u), { username: u, password: p }); alert("新增成功"); }
+                const u = prompt("新管理員用戶名:");
+                const p = prompt("新管理員密碼:");
+                if (u && p) { 
+                    await setDoc(doc(db, "admins", u), { username: u, password: p, createdAt: serverTimestamp() }); 
+                    alert("新增成功");
+                    vflow.loadAdminList();
+                }
             },
+            loadAdminList: async () => {
+                if (user?.role !== 'super') return;
+                const snap = await getDocs(collection(db, "admins"));
+                const container = document.getElementById('admin-list-container');
+                let html = `<p class="text-[9px] font-bold text-slate-300 mt-4 mb-2 uppercase tracking-widest">Authorized Admins</p>`;
+                snap.forEach(d => {
+                    const ad = d.data();
+                    html += `
+                        <div class="flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100">
+                            <span class="text-[11px] font-black text-slate-700">${ad.username}</span>
+                            <button onclick="vflow.removeAdmin('${d.id}')" class="text-red-400 text-[9px] font-black uppercase hover:underline">撤權</button>
+                        </div>
+                    `;
+                });
+                container.innerHTML = html;
+            },
+            removeAdmin: async (adminId) => {
+                if (confirm(`確定要撤銷 ${adminId} 的管理權限嗎？`)) {
+                    await deleteDoc(doc(db, "admins", adminId));
+                    alert("已成功撤回權限");
+                    vflow.loadAdminList();
+                }
+            },
+
+            // --- 列表與 UI 渲染 ---
             renderList: (games) => {
                 const container = document.getElementById('main-content');
                 if (games.length === 0) { container.innerHTML = `<p class="text-center py-20 text-slate-400 font-bold italic uppercase tracking-widest">No Active Games</p>`; return; }
@@ -164,16 +200,16 @@
                             <p class="text-xs font-bold opacity-40 font-mono tracking-tighter">${game.time}</p>
                             ${isMgr ? `<button onclick="vflow.copyWA('${id}','${game.location}','${game.time}')" class="absolute right-6 bottom-6 bg-blue-600 text-[10px] px-4 py-2 rounded-full font-black uppercase">Copy WA</button>` : ''}
                         </div>
-                        ${isMgr ? `<div class="bg-blue-50 p-6 rounded-[30px] mb-6 border border-blue-100 text-[10px] font-black uppercase animate-fade-in">
-                            <div class="flex justify-between mb-4"><span class="text-green-600">已收: <span id="stat-paid">$0</span></span><span class="text-blue-600">預計: <span id="stat-total">$0</span></span></div>
+                        ${isMgr ? `<div class="bg-blue-50 p-6 rounded-[30px] mb-6 border border-blue-100 text-[10px] font-black uppercase animate-fade-in text-center">
+                            <div class="flex justify-between mb-4 px-2"><span class="text-green-600">已收: <span id="stat-paid">$0</span></span><span class="text-blue-600">預計: <span id="stat-total">$0</span></span></div>
                             <div class="flex flex-col gap-2 pt-3 border-t border-blue-100">
-                                <div class="flex justify-between items-center"><span>上限:</span><input type="number" value="${game.maxPlayers}" onchange="vflow.upField('${id}','maxPlayers',this.value)" class="w-12 p-1 rounded border-none bg-white text-center"></div>
-                                <div class="flex justify-between items-center"><span>費用:</span><input type="number" value="${game.price}" onchange="vflow.upField('${id}','price',this.value)" class="w-12 p-1 rounded border-none bg-white text-center"></div>
+                                <div class="flex justify-between items-center px-2"><span>名額上限:</span><input type="number" value="${game.maxPlayers}" onchange="vflow.upField('${id}','maxPlayers',this.value)" class="w-12 p-1 rounded border-none bg-white text-center font-black"></div>
+                                <div class="flex justify-between items-center px-2"><span>場次費用:</span><input type="number" value="${game.price}" onchange="vflow.upField('${id}','price',this.value)" class="w-12 p-1 rounded border-none bg-white text-center font-black"></div>
                             </div>
                         </div>` : ''}
                         <div class="bg-white p-8 rounded-[30px] shadow-sm mb-6 border border-slate-100 text-center animate-fade-in">
-                            <div class="flex justify-between items-center mb-6"><span class="font-black italic text-slate-400 text-[10px] uppercase tracking-widest">Booking</span><span id="p-count" class="text-blue-600 font-black text-[10px] bg-blue-50 px-3 py-1 rounded-full uppercase tracking-tighter italic">Loading...</span></div>
-                            <input id="ig" type="text" placeholder="@Instagram_ID" class="w-full bg-slate-50 p-4 rounded-2xl mb-4 outline-none font-bold border border-transparent focus:border-blue-100 transition-all text-sm">
+                            <div class="flex justify-between items-center mb-6"><span class="font-black italic text-slate-400 text-[10px] uppercase tracking-widest">Booking Form</span><span id="p-count" class="text-blue-600 font-black text-[10px] bg-blue-50 px-3 py-1 rounded-full uppercase tracking-tighter italic">Loading...</span></div>
+                            <input id="ig" type="text" placeholder="@Instagram_ID" class="w-full bg-slate-50 p-4 rounded-2xl mb-4 outline-none font-bold border border-transparent focus:border-blue-100 transition-all text-sm text-center">
                             <div id="pos-grid" class="grid grid-cols-1 gap-2 mb-8"></div>
                             <button onclick="vflow.join('${id}', ${game.price})" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all uppercase tracking-widest">Confirm Booking $${game.price}</button>
                         </div>
@@ -219,12 +255,12 @@
             },
             join: async (gid, pr) => {
                 const ig = document.getElementById('ig').value.trim();
-                if(!ig.startsWith('@') || selectedPositions.length === 0) return alert("資料有誤");
+                if(!ig.startsWith('@') || selectedPositions.length === 0) return alert("IG 需以 @ 開頭，並選擇至少一個位置");
                 if(!confirm(`確認報名？`)) return;
                 await addDoc(collection(db, `games/${gid}/players`), { ig, pos: selectedPositions.join(' & '), status: "pending", timestamp: serverTimestamp() });
                 window.open(payUrl, "_blank"); location.reload();
             },
-            delGame: async (id) => { if(confirm("確定刪除？")) await deleteDoc(doc(db, "games", id)); },
+            delGame: async (id) => { if(confirm("確定刪除場次？")) await deleteDoc(doc(db, "games", id)); },
             confirmP: async (gid, pid) => await updateDoc(doc(db, `games/${gid}/players`, pid), { status: "confirmed" }),
             delP: async (gid, pid) => await deleteDoc(doc(db, `games/${gid}/players`, pid)),
             upField: async (id, f, v) => await updateDoc(doc(db, "games", id), { [f]: parseInt(v) }),
@@ -242,7 +278,10 @@
         if (user) {
             document.getElementById('admin-status').innerHTML = `<div class="mt-4 flex justify-center gap-2 items-center"><span class="text-[10px] font-black bg-blue-100 text-blue-600 px-3 py-1 rounded-full uppercase tracking-tighter italic">Admin: ${user.name}</span><button onclick="sessionStorage.removeItem('vf_user');location.reload();" class="text-[10px] font-black text-red-400 underline uppercase tracking-widest">Logout</button></div>`;
             document.getElementById('admin-panel').classList.remove('hidden');
-            if(user.role === 'super') document.getElementById('super-admin-tools').classList.remove('hidden');
+            if(user.role === 'super') {
+                document.getElementById('super-admin-tools').classList.remove('hidden');
+                vflow.loadAdminList(); // 超級管理員一入嚟就載入名單
+            }
         }
         onSnapshot(doc(db, "settings", "global"), (d) => { if(d.exists()) payUrl = d.data().payUrl; });
         onSnapshot(query(collection(db, "games"), orderBy("timestamp", "desc")), (snap) => {
