@@ -74,6 +74,9 @@
     </div>
 
     <script type="module">
+        // ==========================================
+        // 📦 [A 區：Firebase 配置]
+        // ==========================================
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
         import { getFirestore, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc, setDoc, updateDoc, getDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
@@ -89,12 +92,18 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
+        // ==========================================
+        // 🧠 [B 區：全局變數]
+        // ==========================================
         let user = JSON.parse(sessionStorage.getItem('vf_user'));
         let currentView = 'list';
         let payUrl = "";
         let selectedPositions = [];
         let secretClicks = 0;
 
+        // ==========================================
+        // 🛠️ [C 區：核心功能邏輯 (vflow)]
+        // ==========================================
         window.vflow = {
             clickSecret: () => {
                 secretClicks++;
@@ -135,23 +144,19 @@
                     location.reload();
                 } catch (e) { alert("發佈失敗"); }
             },
-            
-            // --- 超級管理員：系統連結設置 ---
+
+            // 超級管理員專屬
             updatePayUrl: async () => {
                 const newUrl = document.getElementById('pay_url_input').value.trim();
-                if(!newUrl.startsWith('http')) return alert("請輸入有效的網址 (需包含 http:// 或 https://)");
-                try {
-                    await setDoc(doc(db, "settings", "global"), { payUrl: newUrl }, { merge: true });
-                    alert("付款連結已更新！");
-                } catch (e) { alert("更新失敗"); }
+                if(!newUrl.startsWith('http')) return alert("請輸入有效的網址 (需包含 http)");
+                await setDoc(doc(db, "settings", "global"), { payUrl: newUrl }, { merge: true });
+                alert("付款連結已更新！");
             },
-
             addAdminAccount: async () => {
                 const u = prompt("新管理員用戶名:");
                 const p = prompt("新管理員密碼:");
                 if (u && p) { 
                     await setDoc(doc(db, "admins", u), { username: u, password: p, createdAt: serverTimestamp() }); 
-                    alert("新增成功");
                     vflow.loadAdminList();
                 }
             },
@@ -159,23 +164,23 @@
                 if (user?.role !== 'super') return;
                 const snap = await getDocs(collection(db, "admins"));
                 const container = document.getElementById('admin-list-container');
-                let html = `<p class="text-[9px] font-bold text-slate-300 mt-4 mb-2 uppercase tracking-widest text-center">Authorized Admins</p>`;
+                let html = `<p class="text-[9px] font-bold text-slate-300 mt-4 mb-2 uppercase text-center tracking-widest">Current Admins</p>`;
                 snap.forEach(d => {
-                    const ad = d.data();
                     html += `<div class="flex justify-between items-center bg-slate-50 p-4 rounded-2xl border border-slate-100 mb-1">
-                        <span class="text-[11px] font-black text-slate-700">${ad.username}</span>
+                        <span class="text-[11px] font-black text-slate-700">${d.id}</span>
                         <button onclick="vflow.removeAdmin('${d.id}')" class="text-red-400 text-[9px] font-black uppercase">撤權</button>
                     </div>`;
                 });
                 container.innerHTML = html;
             },
             removeAdmin: async (adminId) => {
-                if (confirm(`確定撤銷 ${adminId} 的管理權限？`)) {
+                if (confirm(`確定撤銷 ${adminId} 權限？`)) {
                     await deleteDoc(doc(db, "admins", adminId));
                     vflow.loadAdminList();
                 }
             },
 
+            // 遊戲列表渲染
             renderList: (games) => {
                 const container = document.getElementById('main-content');
                 if (games.length === 0) { container.innerHTML = `<p class="text-center py-20 text-slate-400 font-bold italic uppercase tracking-widest">No Active Games</p>`; return; }
@@ -191,8 +196,11 @@
                         ${canDelete ? `<button onclick="vflow.delGame('${g.id}')" class="absolute top-6 right-6 text-red-200 hover:text-red-400 text-[10px] font-black uppercase">剷場</button>` : ''}
                     </div>`}).join('')}</div>`;
             },
+
+            // 進入報名詳情頁
             goToGame: (id) => {
                 currentView = 'details';
+                selectedPositions = []; // 每次進入重置選擇
                 onSnapshot(doc(db, "games", id), (d) => {
                     if (!d.exists()) return;
                     const game = d.data();
@@ -206,17 +214,17 @@
                         </div>
                         ${isMgr ? `<div class="bg-blue-50 p-6 rounded-[30px] mb-6 border border-blue-100 text-[10px] font-black uppercase animate-fade-in text-center">
                             <div class="flex justify-between mb-4 px-2"><span class="text-green-600">已收: <span id="stat-paid">$0</span></span><span class="text-blue-600">預計: <span id="stat-total">$0</span></span></div>
-                            <div class="flex flex-col gap-2 pt-3 border-t border-blue-100">
-                                <div class="flex justify-between items-center px-2"><span>名額上限:</span><input type="number" value="${game.maxPlayers}" onchange="vflow.upField('${id}','maxPlayers',this.value)" class="w-12 p-1 rounded border-none bg-white text-center font-black"></div>
-                                <div class="flex justify-between items-center px-2"><span>場次費用:</span><input type="number" value="${game.price}" onchange="vflow.upField('${id}','price',this.value)" class="w-12 p-1 rounded border-none bg-white text-center font-black"></div>
+                            <div class="flex flex-col gap-2 pt-3 border-t border-blue-100 text-slate-400">
+                                <div class="flex justify-between items-center px-2"><span>名額上限:</span><input type="number" value="${game.maxPlayers}" onchange="vflow.upField('${id}','maxPlayers',this.value)" class="w-12 p-1 rounded border-none bg-white text-center font-black text-slate-700"></div>
+                                <div class="flex justify-between items-center px-2"><span>場次費用:</span><input type="number" value="${game.price}" onchange="vflow.upField('${id}','price',this.value)" class="w-12 p-1 rounded border-none bg-white text-center font-black text-slate-700"></div>
                             </div>
                         </div>` : ''}
                         <div class="bg-white p-8 rounded-[30px] shadow-sm mb-6 border border-slate-100 text-center animate-fade-in">
                             <div class="flex justify-between items-center mb-6">
-                                <span class="font-black italic text-slate-400 text-[10px] uppercase tracking-widest">Booking Form (最多選2項)</span>
+                                <span class="font-black italic text-slate-400 text-[10px] uppercase tracking-widest">Booking Form</span>
                                 <span id="p-count" class="text-blue-600 font-black text-[10px] bg-blue-50 px-3 py-1 rounded-full uppercase tracking-tighter italic">Loading...</span>
                             </div>
-                            <p class="text-[9px] text-slate-400 mb-4 font-bold uppercase tracking-tighter">* 請選擇 1 至 2 個位置</p>
+                            <p class="text-[9px] text-slate-400 mb-4 font-bold uppercase tracking-tighter">* 請選擇 1 至 2 個位置 (最多揀兩個)</p>
                             <input id="ig" type="text" placeholder="@Instagram_ID" class="w-full bg-slate-50 p-4 rounded-2xl mb-4 outline-none font-bold border border-transparent focus:border-blue-100 transition-all text-sm text-center">
                             <div id="pos-grid" class="grid grid-cols-1 gap-2 mb-8"></div>
                             <button onclick="vflow.join('${id}', ${game.price})" class="w-full bg-blue-600 text-white font-black py-5 rounded-2xl shadow-xl active:scale-95 transition-all uppercase tracking-widest">Confirm Booking $${game.price}</button>
@@ -226,56 +234,65 @@
                     vflow.listenPlayers(id, game, isMgr);
                 });
             },
+
+            // 選位邏輯 (修正顏色 Bug)
             setPos: (p) => {
-                const idx = selectedPositions.indexOf(p);
+                const idx = selectedPositions.findIndex(sel => sel.toLowerCase() === p.toLowerCase());
                 if(idx > -1) {
                     selectedPositions.splice(idx, 1);
                 } else {
                     if(selectedPositions.length >= 2) return alert("最多只能選 2 個位置");
                     selectedPositions.push(p);
                 }
+                
                 document.querySelectorAll('#pos-grid button').forEach(b => {
-                    const bName = b.innerText.charAt(0).toUpperCase() + b.innerText.slice(1).toLowerCase();
-                    if(selectedPositions.includes(bName)) {
+                    const bText = b.innerText.trim().toLowerCase();
+                    const isMatch = selectedPositions.some(sel => sel.toLowerCase() === bText);
+                    if(isMatch) {
                         b.className = "p-4 rounded-2xl border font-black text-[10px] transition-all uppercase tracking-tighter bg-blue-600 text-white shadow-lg border-blue-600";
                     } else {
                         b.className = "p-4 rounded-2xl border font-black text-[10px] transition-all uppercase tracking-tighter bg-slate-50 text-slate-400 border-transparent";
                     }
                 });
             },
-            join: async (gid, pr) => {
-                const ig = document.getElementById('ig').value.trim();
-                if(!ig.startsWith('@')) return alert("Instagram ID 必須以 @ 開頭");
-                if(selectedPositions.length < 1 || selectedPositions.length > 2) return alert("請選擇 1 至 2 個位置");
-                if(!confirm(`確認報名？`)) return;
-                await addDoc(collection(db, `games/${gid}/players`), { ig, pos: selectedPositions.join(' & '), status: "pending", timestamp: serverTimestamp() });
-                window.open(payUrl, "_blank"); location.reload();
-            },
+
             listenPlayers: (gid, gData, isMgr) => {
                 onSnapshot(query(collection(db, `games/${gid}/players`), orderBy("timestamp", "asc")), (snap) => {
                     const players = []; let paid = 0;
                     snap.forEach(d => { const p = {id:d.id, ...d.data()}; players.push(p); if(p.status==='confirmed') paid++; });
+                    
                     if(document.getElementById('p-count')) document.getElementById('p-count').innerText = `已報名：${players.length} / ${gData.maxPlayers}`;
                     if(isMgr && document.getElementById('stat-paid')) {
                         document.getElementById('stat-paid').innerText = `$${paid * (gData.price||30)}`;
                         document.getElementById('stat-total').innerText = `$${players.length * (gData.price||30)}`;
                     }
+
                     const grid = document.getElementById('pos-grid');
-                    if(grid) {
+                    if(grid && grid.children.length === 0) { // 只在初始化時渲染按鈕架構
                         grid.innerHTML = ['Setter','Outside Hitter','Middle Blocker','Opposite Hitter','Libero'].map(p => {
-                            const isSel = selectedPositions.includes(p);
-                            return `<button onclick="vflow.setPos('${p}')" class="p-4 rounded-2xl border font-black text-[10px] transition-all uppercase tracking-tighter ${isSel?'bg-blue-600 text-white shadow-lg border-blue-600':'bg-slate-50 text-slate-400 border-transparent'}">${p}</button>`
+                            return `<button onclick="vflow.setPos('${p}')" class="p-4 rounded-2xl border font-black text-[10px] transition-all uppercase tracking-tighter bg-slate-50 text-slate-400 border-transparent">${p}</button>`
                         }).join('');
                     }
+
                     const listDiv = document.getElementById('player-list');
                     if(isMgr) {
-                        listDiv.innerHTML = players.map(p => `<div class="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm animate-fade-in">
+                        listDiv.innerHTML = players.map(p => `<div class="bg-white p-4 rounded-2xl border border-slate-100 flex justify-between items-center shadow-sm animate-fade-in mb-2">
                             <div><p class="font-black text-slate-800 text-sm">${p.ig}</p><p class="text-[8px] font-black ${p.status==='confirmed'?'text-green-500':'text-orange-400'} uppercase">${p.status==='confirmed'?'● Paid':'○ Pending'} - ${p.pos}</p></div>
                             <div class="flex gap-1"><button onclick="vflow.confirmP('${gid}','${p.id}')" class="bg-green-500 text-white px-3 py-2 rounded-xl text-[9px] font-black uppercase">核實</button><button onclick="vflow.delP('${gid}','${p.id}')" class="bg-red-50 text-red-400 px-3 py-2 rounded-xl text-[9px] font-black uppercase">刪除</button></div>
                         </div>`).join('');
                     } else { listDiv.innerHTML = `<p class="py-10 text-center text-slate-300 text-[10px] font-black uppercase italic tracking-[0.4em]">Privacy List Secured</p>`; }
                 });
             },
+
+            join: async (gid, pr) => {
+                const ig = document.getElementById('ig').value.trim();
+                if(!ig.startsWith('@')) return alert("IG 需以 @ 開頭");
+                if(selectedPositions.length < 1 || selectedPositions.length > 2) return alert("請選擇 1 至 2 個位置");
+                if(!confirm(`確認支付 $${pr} 報名？`)) return;
+                await addDoc(collection(db, `games/${gid}/players`), { ig, pos: selectedPositions.join(' & '), status: "pending", timestamp: serverTimestamp() });
+                window.open(payUrl, "_blank"); location.reload();
+            },
+
             delGame: async (id) => { if(confirm("確定刪除場次？")) await deleteDoc(doc(db, "games", id)); },
             confirmP: async (gid, pid) => await updateDoc(doc(db, `games/${gid}/players`, pid), { status: "confirmed" }),
             delP: async (gid, pid) => await deleteDoc(doc(db, `games/${gid}/players`, pid)),
@@ -288,6 +305,9 @@
             }
         };
 
+        // ==========================================
+        // 🚀 [D 區：Launcher]
+        // ==========================================
         if (user) {
             document.getElementById('admin-status').innerHTML = `<div class="mt-4 flex justify-center gap-2 items-center"><span class="text-[10px] font-black bg-blue-100 text-blue-600 px-3 py-1 rounded-full uppercase tracking-tighter italic">Admin: ${user.name}</span><button onclick="sessionStorage.removeItem('vf_user');location.reload();" class="text-[10px] font-black text-red-400 underline uppercase tracking-widest">Logout</button></div>`;
             document.getElementById('admin-panel').classList.remove('hidden');
@@ -297,12 +317,12 @@
             }
         }
         
-        // 監聽全局設置 (包括付款連結)
         onSnapshot(doc(db, "settings", "global"), (d) => { 
             if(d.exists()) {
                 payUrl = d.data().payUrl;
-                // 自動填充超級管理員輸入框，方便查看目前的 URL
-                if(document.getElementById('pay_url_input')) document.getElementById('pay_url_input').value = payUrl;
+                if(document.getElementById('pay_url_input') && !document.getElementById('pay_url_input').value) {
+                    document.getElementById('pay_url_input').value = payUrl;
+                }
             }
         });
 
