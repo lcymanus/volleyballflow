@@ -13,12 +13,12 @@
 
     <style>
         body { background: #ffffff; color: #1a1a1a; font-family: 'Urbanist', sans-serif; -webkit-tap-highlight-color: transparent; }
-        .watermark-bg { position: relative; }
+        .watermark-bg { position: relative; overflow: hidden; }
         .watermark-bg::before {
             content: "VOLLEYBALLFLOW PRO"; position: absolute; top: 5px; right: 15px;
-            font-size: 8px; font-weight: 800; color: rgba(0, 0, 0, 0.03); letter-spacing: 2px; pointer-events: none;
+            font-size: 8px; font-weight: 800; color: rgba(0, 0, 0, 0.03); letter-spacing: 2px; pointer-events: none; z-index: 0;
         }
-        .premium-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; transition: all 0.25s ease; }
+        .premium-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; transition: all 0.25s ease; position: relative; z-index: 1;}
         .btn-black { background: #000; color: #fff; border-radius: 8px; font-weight: 600; letter-spacing: 1px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
         .btn-black:active { transform: scale(0.98); }
         .btn-outline { border: 1px solid #e5e5e5; border-radius: 8px; font-weight: 600; transition: all 0.2s; }
@@ -63,19 +63,36 @@
         </header>
 
         <div id="admin-panel" class="hidden space-y-10 mb-16">
-            <div id="super-admin-tools" class="hidden premium-card p-6 border-dashed border-red-200">
+            <div id="super-admin-tools" class="hidden premium-card p-6 border-dashed border-red-200 watermark-bg">
                 <h3 class="section-title text-red-400 mb-4">System Master</h3>
                 <div class="flex gap-2 mb-4">
                     <input id="new_admin_u" type="text" placeholder="ID" class="input-flat text-xs">
                     <input id="new_admin_p" type="text" placeholder="PW" class="input-flat text-xs">
                     <button onclick="vflow.addAdminAccount()" class="btn-black px-4 text-[10px]">ADD</button>
                 </div>
-                <div id="admin-list-container" class="text-[10px] font-bold space-y-2 mt-4 pt-4 border-t border-red-50"></div>
+                <div id="admin-list-container" class="space-y-2 mt-4 pt-4 border-t border-red-50"></div>
             </div>
 
-            <div class="premium-card p-6">
-                <h3 class="section-title mb-6">Create New Event</h3>
+            <div class="premium-card p-6 watermark-bg">
+                <h3 class="section-title mb-6">Profile Settings</h3>
                 <div class="space-y-4">
+                    <div class="grid grid-cols-2 gap-4">
+                        <div>
+                            <label class="section-title !tracking-widest !text-[8px] mb-2 block">New Username</label>
+                            <input id="edit_my_u" type="text" placeholder="留空則不更改" class="input-flat text-xs relative z-10">
+                        </div>
+                        <div>
+                            <label class="section-title !tracking-widest !text-[8px] mb-2 block">New Password</label>
+                            <input id="edit_my_p" type="text" placeholder="留空則不更改" class="input-flat text-xs relative z-10">
+                        </div>
+                    </div>
+                    <button onclick="vflow.updateMyProfile()" class="w-full btn-outline py-3 text-xs uppercase font-bold hover:bg-black hover:text-white transition relative z-10">Update Profile</button>
+                </div>
+            </div>
+
+            <div class="premium-card p-6 watermark-bg">
+                <h3 class="section-title mb-6">Create New Event</h3>
+                <div class="space-y-4 relative z-10">
                     <input id="new_loc" type="text" placeholder="體育館名稱" class="input-flat">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="date-input-container">
@@ -91,7 +108,7 @@
                     <div class="grid grid-cols-3 gap-4">
                         <div><label class="section-title !tracking-widest !text-[8px]">Max</label><input id="new_max" type="number" value="15" class="input-flat font-bold"></div>
                         <div><label class="section-title !tracking-widest !text-[8px]">Price</label><input id="new_price" type="number" value="30" class="input-flat font-bold"></div>
-                        <div><label class="section-title !tracking-widest !text-[8px]">Cost</label><input id="new_cost" type="number" value="0" class="input-flat font-bold text-red-500"></div>
+                        <div><label class="section-title !tracking-widest !text-[8px]">Cost</label><input id="new_cost" type="number" value="240" class="input-flat font-bold text-red-500"></div>
                     </div>
                     <div class="pt-4 border-t border-gray-100">
                         <p class="section-title mb-4">Payment Settings</p>
@@ -111,9 +128,9 @@
         <div id="main-content" class="space-y-8"></div>
         
         <div id="story_modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center p-6 z-[2000]">
-            <div class="bg-white w-full max-w-sm rounded-lg overflow-hidden">
-                <img id="story_preview" src="" class="w-full">
-                <div class="p-6 space-y-3">
+            <div class="bg-white w-full max-w-sm rounded-lg overflow-hidden relative">
+                <img id="story_preview" src="" class="w-full relative z-10">
+                <div class="p-6 space-y-3 relative z-10">
                     <a id="story_download_btn" href="#" download="story.png" class="block w-full btn-black text-center py-4 text-xs uppercase">Download</a>
                     <button onclick="document.getElementById('story_modal').classList.add('hidden')" class="w-full text-gray-400 font-bold text-[10px] uppercase">Close</button>
                 </div>
@@ -136,8 +153,8 @@
     </div>
 
     <div id="sheet-overlay" class="fixed inset-0 bg-black/40 opacity-0 pointer-events-none transition-opacity z-[999]" onclick="vflow.closeSheet()"></div>
-    <div id="bottom-sheet" class="bottom-sheet">
-        <div class="max-w-md mx-auto">
+    <div id="bottom-sheet" class="bottom-sheet watermark-bg">
+        <div class="max-w-md mx-auto relative z-10">
             <div class="flex justify-between items-center mb-10">
                 <h3 class="text-xl font-bold tracking-tighter uppercase">Register</h3>
                 <span class="text-2xl font-light" id="sheet-price">$0</span>
@@ -151,10 +168,10 @@
             <div class="space-y-6">
                 <div>
                     <label class="section-title block mb-3">Receipt Screenshot</label>
-                    <div class="border border-dashed border-gray-200 rounded-lg p-8 text-center relative hover:bg-gray-50 cursor-pointer">
+                    <div class="border border-dashed border-gray-200 rounded-lg p-8 text-center relative hover:bg-gray-50 cursor-pointer bg-white/80 backdrop-blur">
                         <input type="file" id="receipt_input" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="vflow.previewReceipt(this)">
                         <div id="receipt_placeholder" class="text-gray-400 text-xs font-medium">Tap to upload receipt</div>
-                        <img id="receipt_thumbnail" src="" class="hidden h-32 mx-auto rounded">
+                        <img id="receipt_thumbnail" src="" class="hidden h-32 mx-auto rounded relative z-10">
                     </div>
                 </div>
                 <button id="btn-submit-reg" onclick="vflow.executeJoin()" class="w-full btn-black py-4 uppercase text-xs opacity-30 pointer-events-none">Confirm Submission</button>
@@ -226,9 +243,9 @@
                 container.innerHTML = games.map(g => {
                     if(!g.approved && user?.role !== 'super' && user?.name !== g.createdBy) return '';
                     return `<div onclick="vflow.goToGame('${g.id}')" class="premium-card p-8 watermark-bg">
-                        <div class="flex justify-between items-start mb-10"><span class="section-title !text-indigo-600">${g.time}</span><span class="text-[8px] font-bold text-gray-300">@${g.createdBy.toUpperCase()}</span></div>
-                        <h3 class="text-2xl font-extrabold tracking-tight mb-8 uppercase">${g.location}</h3>
-                        ${(user?.role==='super'||user?.name===g.createdBy) ? `<div class="flex gap-4 border-t border-gray-100 pt-6 mt-4">
+                        <div class="relative z-10 flex justify-between items-start mb-10"><span class="section-title !text-indigo-600">${g.time}</span><span class="text-[8px] font-bold text-gray-300">@${g.createdBy.toUpperCase()}</span></div>
+                        <h3 class="relative z-10 text-2xl font-extrabold tracking-tight mb-8 uppercase">${g.location}</h3>
+                        ${(user?.role==='super'||user?.name===g.createdBy) ? `<div class="relative z-10 flex gap-4 border-t border-gray-100 pt-6 mt-4">
                             ${(user?.role==='super' && !g.approved) ? `<button onclick="event.stopPropagation();vflow.approveGame('${g.id}', '${g.location}')" class="text-[10px] font-extrabold text-emerald-500">APPROVE</button>` : ''}
                             <button onclick="event.stopPropagation();vflow.generateStory('${g.location}', '${g.time}', ${g.maxPlayers}, ${g.price}, '${g.createdBy}')" class="text-[10px] font-extrabold">STORY</button>
                             <button onclick="event.stopPropagation();vflow.delGame('${g.id}')" class="text-[10px] font-extrabold text-red-300">DELETE</button>
@@ -245,10 +262,12 @@
                         <button onclick="location.reload()" class="section-title mb-10 flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> Gallery</button>
                         <h2 class="text-4xl font-extrabold tracking-tighter mb-4 uppercase">${g.location}</h2>
                         <div class="flex justify-between mb-12"><span class="section-title !text-indigo-600">${g.time}</span><span id="p-count" class="text-xs font-bold">0 / ${g.maxPlayers}</span></div>
-                        <div class="premium-card p-8 mb-12">
-                            <input id="nickname" type="text" placeholder="NICKNAME" class="input-flat mb-4"><input id="ig" type="text" placeholder="IG (必須有@)" class="input-flat mb-8">
-                            <div class="space-y-2 mb-8">${['Setter (二傳)','Outside Hitter (大搥)','Middle Blocker (快攻)','Opposite (接應)','Libero (自由人)'].map(p=>`<button data-pos="${p}" onclick="vflow.setPos('${p}')" class="pos-btn btn-outline w-full py-4 text-[10px] uppercase">${p}</button>`).join('')}</div>
-                            <button onclick="vflow.prepJoin('${id}', ${g.price}, '${g.createdBy}')" class="w-full btn-black py-5 uppercase text-xs">Join $${g.price}</button>
+                        <div class="premium-card p-8 mb-12 watermark-bg">
+                            <div class="relative z-10">
+                                <input id="nickname" type="text" placeholder="NICKNAME" class="input-flat mb-4"><input id="ig" type="text" placeholder="IG (必須有@)" class="input-flat mb-8">
+                                <div class="space-y-2 mb-8">${['Setter (二傳)','Outside Hitter (大搥)','Middle Blocker (快攻)','Opposite (接應)','Libero (自由人)'].map(p=>`<button data-pos="${p}" onclick="vflow.setPos('${p}')" class="pos-btn btn-outline w-full py-4 text-[10px] uppercase bg-white">${p}</button>`).join('')}</div>
+                                <button onclick="vflow.prepJoin('${id}', ${g.price}, '${g.createdBy}')" class="w-full btn-black py-5 uppercase text-xs">Join $${g.price}</button>
+                            </div>
                         </div><div id="player-list" class="space-y-4 pb-20"></div>`;
                     vflow.listenPlayers(id, isMgr, g.maxPlayers);
                 });
@@ -274,8 +293,8 @@
 
             switchPayTab: (t) => {
                 const isP = t==='payme'; document.getElementById('content-payme').classList.toggle('hidden', !isP); document.getElementById('content-alipay').classList.toggle('hidden', isP);
-                document.getElementById('tab-payme').className = isP ? 'text-[10px] font-extrabold border-b-2 border-black pb-1' : 'text-[10px] font-extrabold text-gray-300 pb-1';
-                document.getElementById('tab-alipay').className = !isP ? 'text-[10px] font-extrabold border-b-2 border-black pb-1' : 'text-[10px] font-extrabold text-gray-300 pb-1';
+                document.getElementById('tab-payme').className = isP ? 'text-[10px] font-extrabold border-b-2 border-black pb-1 relative z-10' : 'text-[10px] font-extrabold text-gray-300 pb-1 relative z-10';
+                document.getElementById('tab-alipay').className = !isP ? 'text-[10px] font-extrabold border-b-2 border-black pb-1 relative z-10' : 'text-[10px] font-extrabold text-gray-300 pb-1 relative z-10';
             },
 
             previewReceipt: (input) => {
@@ -290,8 +309,8 @@
                 const ig = document.getElementById('ig').value.trim(); const nick = document.getElementById('nickname').value.trim();
                 if(!nick || !ig.startsWith('@') || selectedPositions.length===0) { vflow.showToast("資料錯誤", true); return; }
                 const adminDoc = await getDoc(doc(db, "admins", org)); const orgData = adminDoc.data() || {};
-                document.getElementById('content-payme').innerHTML = orgData.payUrl ? `<a href="${orgData.payUrl}" target="_blank" class="btn-black w-48 mx-auto py-4 text-[10px]">OPEN PAYME</a>` : 'No URL';
-                document.getElementById('content-alipay').innerHTML = orgData.payImg ? `<img src="${orgData.payImg}" class="w-40 mx-auto rounded">` : 'No QR';
+                document.getElementById('content-payme').innerHTML = orgData.payUrl ? `<a href="${orgData.payUrl}" target="_blank" class="btn-black w-48 mx-auto py-4 text-[10px] relative z-10">OPEN PAYME</a>` : 'No URL';
+                document.getElementById('content-alipay').innerHTML = orgData.payImg ? `<img src="${orgData.payImg}" class="w-40 mx-auto rounded relative z-10">` : 'No QR';
                 document.getElementById('sheet-price').innerText = `$${pr}`;
                 tempJoinData = { ...tempJoinData, gid, ig, nickname: nick, pos: selectedPositions.join(' & '), org }; vflow.openSheet();
             },
@@ -329,6 +348,45 @@
                 vflow.showToast(`管理員 ${u} 已新增`);
                 document.getElementById('new_admin_u').value = '';
                 document.getElementById('new_admin_p').value = '';
+            },
+
+            // 升級 2: 管理員更新自己的資料
+            updateMyProfile: async () => {
+                const newU = document.getElementById('edit_my_u').value.trim();
+                const newP = document.getElementById('edit_my_p').value.trim();
+                if(!newU && !newP) return;
+
+                const oldDocRef = doc(db, "admins", user.name);
+                const oldDocSnap = await getDoc(oldDocRef);
+                const data = oldDocSnap.data() || { username: user.name, role: user.role };
+
+                if(newU && newU !== user.name) {
+                    const check = await getDoc(doc(db, "admins", newU));
+                    if(check.exists()) { vflow.showToast("用戶名已被使用", true); return; }
+                    
+                    const newData = { ...data, username: newU };
+                    if(newP) newData.password = newP;
+                    
+                    await setDoc(doc(db, "admins", newU), newData);
+                    if (oldDocSnap.exists()) await deleteDoc(oldDocRef);
+                    
+                    user.name = newU;
+                    sessionStorage.setItem('vf_user', JSON.stringify(user));
+                    vflow.showToast("帳戶資料更新成功！");
+                    setTimeout(()=>location.reload(), 1000);
+                } else if (newP) {
+                    await setDoc(oldDocRef, { password: newP, username: user.name }, { merge: true });
+                    vflow.showToast("密碼已更新！");
+                    document.getElementById('edit_my_p').value = '';
+                }
+            },
+
+            // 升級 3: 超級管理員更改管理員密碼
+            updateAdminPass: async (id) => {
+                const newP = document.getElementById(`admin_p_${id}`).value.trim();
+                if(!newP) return;
+                await setDoc(doc(db, "admins", id), { password: newP }, { merge: true });
+                vflow.showToast(`已更新 ${id} 的密碼`);
             }
         };
 
@@ -337,15 +395,26 @@
             document.getElementById('admin-panel').classList.remove('hidden'); 
             if(user.role==='super') {
                 document.getElementById('super-admin-tools').classList.remove('hidden');
-                // 補回：超級管理員監控管理員清單
+                // 升級 1 & 3：超級管理員監控管理員清單，可看密碼、改密碼及強化刪除介面
                 onSnapshot(collection(db, "admins"), (snap) => {
-                    const list = []; snap.forEach(d => list.push(d.data().username));
-                    document.getElementById('admin-list-container').innerHTML = `<p class="mb-2 text-gray-300">ADMIN LIST:</p>` + list.map(name => `<div class="flex justify-between items-center bg-gray-50 p-2 rounded"><span>@${name.toUpperCase()}</span><button onclick="vflow.delAdmin('${name}')" class="text-red-400">DEL</button></div>`).join('');
+                    const list = []; snap.forEach(d => list.push({id: d.id, ...d.data()}));
+                    document.getElementById('admin-list-container').innerHTML = `<p class="mb-2 text-gray-300 text-[10px] font-bold">ADMIN LIST:</p>` + 
+                    list.map(a => `
+                    <div class="flex flex-col bg-white p-4 rounded-lg mb-3 border border-gray-100 shadow-sm relative z-10">
+                        <div class="flex justify-between items-center mb-3">
+                            <span class="font-extrabold text-sm tracking-tight text-indigo-600">@${a.username.toUpperCase()}</span>
+                            <button onclick="vflow.delAdmin('${a.id}')" class="text-red-500 font-extrabold px-3 py-1 bg-red-50 rounded text-[10px] hover:bg-red-500 hover:text-white transition">DELETE</button>
+                        </div>
+                        <div class="flex gap-2">
+                            <input id="admin_p_${a.id}" type="text" value="${a.password || ''}" placeholder="PASSWORD" class="input-flat !p-2 text-[10px] flex-1 font-mono bg-gray-50">
+                            <button onclick="vflow.updateAdminPass('${a.id}')" class="btn-black px-4 text-[10px]">SAVE PW</button>
+                        </div>
+                    </div>`).join('');
                 });
             }
         }
         
-        vflow.delAdmin = async (name) => { if(confirm(`刪除管理員 ${name}？`)) await deleteDoc(doc(db, "admins", name)); };
+        vflow.delAdmin = async (name) => { if(confirm(`確定要刪除管理員 ${name} 嗎？此操作無法還原。`)) { await deleteDoc(doc(db, "admins", name)); vflow.showToast("已成功刪除"); } };
 
         onSnapshot(query(collection(db, "games"), orderBy("timestamp", "desc")), (snap) => { const games=[]; snap.forEach(d=>games.push({id:d.id, ...d.data()})); if(currentView==='list') vflow.renderList(games); });
     </script>
