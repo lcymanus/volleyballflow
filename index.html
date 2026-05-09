@@ -198,8 +198,16 @@
                 const ig = $('ig').value.trim(); const nick = $('nickname').value.trim();
                 if(!nick || !ig.startsWith('@') || selectedPositions.length===0) { vflow.showToast("資料錯誤", true); return; }
                 const adminDoc = await getDoc(doc(db, "admins", org)); const orgData = adminDoc.data() || {};
-                $('content-payme').innerHTML = orgData.payUrl ? `<a href="${orgData.payUrl}" target="_blank" class="btn-black w-48 mx-auto py-4 text-[10px] relative z-10">OPEN PAYME</a>` : 'No URL';
-                $('content-alipay').innerHTML = orgData.payImg ? `<img src="${orgData.payImg}" class="w-40 mx-auto rounded relative z-10">` : 'No QR';
+                
+                // 【升級核心】強化 PayMe 及 Alipay 付款介面
+                $('content-payme').innerHTML = orgData.payUrl ? 
+                    `<div class="p-4 bg-red-50 rounded-lg border border-red-100"><p class="text-[10px] text-red-800 mb-3 font-bold tracking-widest">點擊下方按鈕跳轉至 PayMe</p><a href="${orgData.payUrl}" target="_blank" class="flex items-center justify-center w-full bg-[#E02443] text-white rounded-lg py-4 text-xs font-bold shadow-md active:scale-95 transition relative z-10"><i class="fa-solid fa-link mr-2"></i> 撳呢度用 PayMe 俾錢</a></div>` : 
+                    '<p class="text-xs text-gray-400 py-4">管理員未設定 PayMe 連結</p>';
+                    
+                $('content-alipay').innerHTML = orgData.payImg ? 
+                    `<div class="p-4 bg-blue-50 rounded-lg border border-blue-100"><p class="text-[10px] text-blue-800 mb-3 font-bold tracking-widest">請儲存或掃描下方 QR Code 付款</p><img src="${orgData.payImg}" class="w-48 mx-auto rounded-lg shadow-sm relative z-10 border border-blue-200"></div>` : 
+                    '<p class="text-xs text-gray-400 py-4">管理員未設定 Alipay QR Code</p>';
+                
                 $('sheet-price').innerText = `$${pr}`; tempJoinData = { ...tempJoinData, gid, ig, nickname: nick, pos: selectedPositions.join(' & '), org }; vflow.openSheet();
             },
             executeJoin: async () => {
