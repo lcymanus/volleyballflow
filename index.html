@@ -36,7 +36,7 @@
     <div id="app-root" class="max-w-md mx-auto">
         <header class="mb-10 text-center relative z-10 pt-4">
             <h1 onclick="vflow.clickSecret()" class="text-4xl font-black italic tracking-tighter text-slate-900 leading-none cursor-pointer select-none">VOLLEYFLOW<span class="text-indigo-600">.</span></h1>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em] mt-3">Professional Ecosystem</p>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em] mt-3">HONG KONG VOLLEYBALL COMMUNITY</p>
             <div id="admin-status" class="mt-6"></div>
         </header>
 
@@ -46,7 +46,7 @@
                 <div class="flex gap-2 mb-4">
                     <input id="new_admin_u" type="text" placeholder="New ID" class="flex-1 bg-white border border-red-200 p-3 rounded-xl text-xs outline-none">
                     <input id="new_admin_p" type="text" placeholder="Password" class="flex-1 bg-white border border-red-200 p-3 rounded-xl text-xs outline-none">
-                    <button onclick="vflow.addAdminAccount()" class="bg-red-500 text-white px-4 rounded-xl text-[10px] font-black shadow-md">Add</button>
+                    <button onclick="vflow.addAdminAccount()" class="bg-red-500 text-white px-4 rounded-xl text-[10px] font-black shadow-md">Add Admin</button>
                 </div>
                 <div id="admin-list-container" class="space-y-2 mt-4 border-t border-red-200 pt-4"></div>
             </div>
@@ -100,8 +100,8 @@
         <div id="main-content" class="relative z-10 space-y-5"></div>
         
         <div id="story_modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center p-6 z-[2000]"><div class="bg-white w-full max-w-sm p-6 rounded-[32px] shadow-2xl border border-slate-100"><h3 class="text-slate-800 text-center font-black uppercase mb-4 tracking-widest">Post Ready! 📸</h3><img id="story_preview" src="" class="w-full rounded-2xl mb-6 shadow-md border border-slate-100"><a id="story_download_btn" href="#" download="story.png" class="block w-full bg-indigo-600 text-white text-center font-black py-4 rounded-2xl shadow-lg uppercase tracking-widest text-xs mb-2">下載宣傳圖</a><button onclick="document.getElementById('story_modal').classList.add('hidden')" class="w-full text-slate-400 font-bold py-2 text-[10px] uppercase">取消</button></div></div>
-        <div id="login_modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center p-6 z-[3000]"><div class="glass-card w-full max-w-xs p-8 text-center bg-white"><h3 class="font-black italic text-slate-800 mb-6 uppercase text-xl">Login</h3><input id="login_u" type="text" placeholder="Username" class="input-light mb-3"><input id="login_p" type="password" placeholder="Password" class="input-light mb-6"><div class="flex gap-3"><button onclick="vflow.closeLogin()" class="flex-1 bg-slate-100 text-slate-600 font-black py-3.5 rounded-xl uppercase text-xs">Cancel</button><button onclick="vflow.login()" class="flex-1 bg-indigo-600 text-white font-black py-3.5 rounded-xl uppercase text-xs">Login</button></div></div></div>
-        <div id="receipt_modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-[4000]" onclick="this.classList.add('hidden')"><div class="relative max-w-full max-h-full p-2"><img id="receipt_display_img" src="" class="max-w-full max-h-[80vh] rounded-2xl shadow-2xl object-contain border-4 border-white"></div></div>
+        <div id="login_modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center p-6 z-[3000]"><div class="glass-card w-full max-w-xs p-8 text-center bg-white"><h3 class="font-black italic text-slate-800 mb-6 uppercase text-xl">VolleyballFlow Login</h3><input id="login_u" type="text" placeholder="Username" class="input-light mb-3"><input id="login_p" type="password" placeholder="Password" class="input-light mb-6"><div class="flex gap-3"><button onclick="vflow.closeLogin()" class="flex-1 bg-slate-100 text-slate-600 font-black py-3.5 rounded-xl uppercase text-xs">Cancel</button><button onclick="vflow.login()" class="flex-1 bg-indigo-600 text-white font-black py-3.5 rounded-xl uppercase text-xs shadow-md shadow-indigo-200">Login</button></div></div></div>
+        <div id="receipt_modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-[4000]" onclick="this.classList.add('hidden')"><div class="relative max-w-full max-h-full p-2"><img id="receipt_display_img" src="" class="max-w-full max-h-[80vh] rounded-2xl shadow-2xl object-contain bg-slate-900 border-4 border-white"></div></div>
     </div>
 
     <div id="sheet-overlay" class="sheet-overlay" onclick="vflow.closeSheet()"></div>
@@ -117,22 +117,22 @@
                 <div class="text-right"><p class="text-[10px] font-black text-indigo-600 uppercase bg-indigo-50 px-2 py-1 rounded mb-1" id="sheet-org-name">Org</p><p class="text-[10px] font-black text-slate-600 bg-slate-100 px-3 py-1 rounded-full border border-slate-200" id="sheet-ig-tag">@ig</p></div>
             </div>
         </div>
-        <div class="space-y-5">
+        <div id="payment-upload-area" class="space-y-5">
             <div class="flex gap-2 bg-slate-100 p-1 rounded-2xl">
                 <button id="tab-payme" onclick="vflow.switchPayTab('payme')" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase bg-white text-indigo-600 shadow-sm">PayMe</button>
                 <button id="tab-alipay" onclick="vflow.switchPayTab('alipay')" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase text-slate-500">Alipay</button>
             </div>
             <div id="content-payme" class="text-center bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100"></div>
             <div id="content-alipay" class="hidden text-center bg-sky-50/50 p-5 rounded-2xl border border-sky-100"></div>
-            <div class="mt-4 border-t border-slate-100 pt-5 text-center">
-                <label class="text-[11px] font-black text-slate-800 uppercase block mb-3">📸 上傳付款截圖以完成報名</label>
-                <div class="file-upload-wrapper bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-6">
+            <div class="mt-4 border-t border-slate-100 pt-5">
+                <label class="text-[11px] font-black text-slate-800 uppercase block mb-3 text-center">📸 上傳截圖完成報名</label>
+                <div class="file-upload-wrapper bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center">
                     <input type="file" id="receipt_input" accept="image/*" onchange="vflow.previewReceipt(this)">
                     <div id="receipt_placeholder"><p class="text-xs font-bold text-slate-500">點擊選擇圖片</p></div>
                     <img id="receipt_thumbnail" src="" class="hidden w-full h-32 object-cover rounded-xl mt-2">
                 </div>
-                <button id="btn-submit-reg" onclick="vflow.executeJoin()" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl shadow-lg uppercase text-xs mt-4 opacity-50 cursor-not-allowed" disabled>確認上傳並報名</button>
             </div>
+            <button id="btn-submit-reg" onclick="vflow.executeJoin()" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl shadow-lg uppercase tracking-widest text-xs opacity-50 cursor-not-allowed" disabled>確認上傳並報名</button>
         </div>
     </div>
 
@@ -158,52 +158,48 @@
                 const p = document.getElementById('login_p').value.trim();
                 if(u==="Manusyip" && p==="Manusyip0830") { sessionStorage.setItem('vf_user', JSON.stringify({name:u, role:'super'})); location.reload(); return; }
                 const snap = await getDocs(query(collection(db, "admins"), where("username", "==", u), where("password", "==", p)));
-                if(!snap.empty) { sessionStorage.setItem('vf_user', JSON.stringify({name:u, role:'normal'})); location.reload(); } else alert("密碼錯誤");
+                if(!snap.empty) { sessionStorage.setItem('vf_user', JSON.stringify({name:u, role:'normal'})); location.reload(); } else alert("錯誤");
             },
-
-            // 👑 升級功能：帳號管理
             addAdminAccount: async () => {
                 const u = document.getElementById('new_admin_u').value.trim();
                 const p = document.getElementById('new_admin_p').value.trim();
                 if(!u || !p) return;
                 await setDoc(doc(db, "admins", u), { username: u, password: p, role: 'organizer' });
-                alert("已新增"); 
+                alert("管理員已新增");
             },
-            delAdmin: async (id) => { if(confirm("確定刪除？")) await deleteDoc(doc(db, "admins", id)); },
+            delAdmin: async (id) => { if(confirm("確定刪除此管理員？")) await deleteDoc(doc(db, "admins", id)); },
             resetAdminPw: async (id) => {
-                const newP = prompt(`為管理員 ${id} 設定新密碼:`);
-                if(newP) { await updateDoc(doc(db, "admins", id), { password: newP }); alert("密碼已更新"); }
+                const newP = prompt(`請輸入管理員 ${id} 的新密碼:`);
+                if(newP) { await updateDoc(doc(db, "admins", id), { password: newP }); alert("密碼已重置"); }
             },
             changeSelfPw: async () => {
-                const newP = prompt("輸入你的新密碼:");
+                const newP = prompt("請輸入新密碼:");
                 if(!newP) return;
-                if(user.role==='super') return alert("Super Admin 請於代碼內手動修改");
+                if(user.role==='super') return alert("超級管理員請於源代碼手動更改");
                 await updateDoc(doc(db, "admins", user.name), { password: newP });
                 alert("修改成功，請重新登入"); sessionStorage.clear(); location.reload();
             },
-
-            // --- 原有所有功能 (Story, Pay, Game, CopyList) 全部保留 ---
             openSheet: () => { document.getElementById('bottom-sheet').classList.add('open'); document.getElementById('sheet-overlay').classList.add('open'); },
             closeSheet: () => { document.getElementById('bottom-sheet').classList.remove('open'); document.getElementById('sheet-overlay').classList.remove('open'); },
-            updatePayUrl: async () => { await setDoc(doc(db, "admins", user.name), { payUrl: document.getElementById('pay_url_input').value }, { merge: true }); alert("儲存成功"); },
-            uploadPayImg: function() { const file = document.getElementById('pay_img_input').files[0]; if(!file) return; const reader = new FileReader(); reader.onloadend = async () => { await setDoc(doc(db, "admins", user.name), { payImg: reader.result }, { merge: true }); alert("上傳成功"); }; reader.readAsDataURL(file); },
+            updatePayUrl: async () => { await setDoc(doc(db, "admins", user.name), { payUrl: document.getElementById('pay_url_input').value }, { merge: true }); alert("已儲存"); },
+            uploadPayImg: function() { const file = document.getElementById('pay_img_input').files[0]; if(!file) return; const reader = new FileReader(); reader.onloadend = async () => { await setDoc(doc(db, "admins", user.name), { payImg: reader.result }, { merge: true }); alert("已上傳"); }; reader.readAsDataURL(file); },
             createGame: async () => {
                 const loc = document.getElementById('new_loc').value.trim(); const d = document.getElementById('new_date').value;
-                if(!loc||!d) return alert("資料不足");
+                if(!loc||!d) return alert("資料不全");
                 const fullTime = `${d} ${document.getElementById('start_time').value}-${document.getElementById('end_time').value}`;
                 await addDoc(collection(db, "games"), { location: loc, time: fullTime, description: document.getElementById('new_desc').value.trim(), maxPlayers: parseInt(document.getElementById('new_max').value), price: parseInt(document.getElementById('new_price').value), cost: parseInt(document.getElementById('new_cost').value||0), createdBy: user.name, approved: user.role==='super', timestamp: serverTimestamp() });
-                if(user.role==='super') vflow.sendTG(`🆕 發布場次：${loc}\n⏰ ${fullTime}`);
-                alert("已發布"); location.reload();
+                if(user.role==='super') vflow.sendTG(`🆕 新場次：${loc}\n⏰ ${fullTime}`);
+                alert("已處理"); location.reload();
             },
-            approveGame: async (id, loc) => { await updateDoc(doc(db, "games", id), { approved: true }); vflow.sendTG(`✅ 核准上架：${loc}`); alert("核准成功"); },
-            delGame: async (id) => { if(confirm("確定刪除？")) await deleteDoc(doc(db, "games", id)); },
+            approveGame: async (id, loc) => { await updateDoc(doc(db, "games", id), { approved: true }); vflow.sendTG(`✅ 核准：${loc}`); alert("已核准"); },
+            delGame: async (id) => { if(confirm("刪除？")) await deleteDoc(doc(db, "games", id)); },
             setPos: (p) => { const idx = selectedPositions.indexOf(p); if(idx>-1) selectedPositions.splice(idx,1); else { if(selectedPositions.length>=2) return; selectedPositions.push(p); } document.querySelectorAll('.pos-btn').forEach(btn => { btn.classList.toggle('pos-selected', selectedPositions.includes(btn.getAttribute('data-pos'))); }); },
             prepJoin: async (gid, pr, loc, time, max, org) => {
                 const ig = document.getElementById('ig').value.trim(); const nick = document.getElementById('nickname').value.trim();
-                if(!ig.startsWith('@') || !nick || selectedPositions.length===0) return alert("請填寫正確資料");
+                if(!ig.startsWith('@') || !nick || selectedPositions.length===0) return alert("資料不全或 IG 格式錯誤");
                 const adminDoc = await getDoc(doc(db, "admins", org)); const orgData = adminDoc.data() || {};
-                document.getElementById('content-payme').innerHTML = orgData.payUrl ? `<a href="${orgData.payUrl}" target="_blank" class="bg-[#E51B5C] text-white font-black py-4 rounded-xl block">PayMe One-Click Pay</a>` : `未提供 PayMe`;
-                document.getElementById('content-alipay').innerHTML = orgData.payImg ? `<img src="${orgData.payImg}" class="w-48 mx-auto rounded-xl shadow-md">` : `未提供支付圖`;
+                document.getElementById('content-payme').innerHTML = orgData.payUrl ? `<a href="${orgData.payUrl}" target="_blank" class="bg-[#E51B5C] text-white font-black py-4 rounded-xl block">PayMe 付款</a>` : `未提供`;
+                document.getElementById('content-alipay').innerHTML = orgData.payImg ? `<img src="${orgData.payImg}" class="w-48 mx-auto rounded-xl">` : `未提供`;
                 document.getElementById('sheet-price').innerText = `$${pr}`; document.getElementById('sheet-org-name').innerText = `@${org}`; document.getElementById('sheet-ig-tag').innerText = ig;
                 tempJoinData = { gid, loc, time, max, ig, nickname: nick, pos: selectedPositions.join(' & ') }; vflow.openSheet();
             },
@@ -213,22 +209,22 @@
                 const file = document.getElementById('receipt_input').files[0]; if(!file) return;
                 const base64Img = await vflow.compressImg(file);
                 await addDoc(collection(db, `games/${tempJoinData.gid}/players`), { ...tempJoinData, status: "pending", receipt: base64Img, timestamp: serverTimestamp() });
-                vflow.sendTG(`🔔 有人報名了！\n👤 ${tempJoinData.nickname}\n📍 ${tempJoinData.loc}`);
-                alert("報名已提交！"); vflow.closeSheet(); location.reload();
+                vflow.sendTG(`🔔 報名：${tempJoinData.nickname}\n📍 ${tempJoinData.loc}`);
+                alert("成功！"); vflow.closeSheet(); location.reload();
             },
             viewReceipt: (b64) => { document.getElementById('receipt_display_img').src = b64; document.getElementById('receipt_modal').classList.remove('hidden'); },
             renderList: (games) => {
                 const container = document.getElementById('main-content');
                 container.innerHTML = games.map(g => {
                     if(!g.approved && user?.role !== 'super' && user?.name !== g.createdBy) return '';
-                    return `<div onclick="vflow.goToGame('${g.id}')" class="glass-card p-6 ${!g.approved ? 'bg-amber-50 border-amber-200' : ''}">
-                        <p class="text-[11px] font-black text-indigo-600 uppercase mb-2">${g.time}</p>
-                        <h3 class="text-2xl font-black italic text-slate-800">${g.location}</h3>
-                        <p class="text-[9px] font-black text-slate-400 mt-2">ORGANIZER: ${g.createdBy}</p>
-                        ${(user?.role==='super'||user?.name===g.createdBy) ? `<div class="mt-4 flex gap-2 pt-4 border-t border-slate-100">
+                    return `<div onclick="vflow.goToGame('${g.id}')" class="glass-card p-6 ${!g.approved ? 'bg-amber-50' : ''}">
+                        <p class="text-[11px] font-black text-indigo-600 uppercase">${g.time}</p>
+                        <h3 class="text-2xl font-black italic">${g.location}</h3>
+                        <p class="text-[9px] text-slate-400 mt-1 uppercase">Org: ${g.createdBy}</p>
+                        ${(user?.role==='super'||user?.name===g.createdBy) ? `<div class="mt-4 flex gap-2 pt-4 border-t">
                             ${(user?.role==='super' && !g.approved) ? `<button onclick="event.stopPropagation();vflow.approveGame('${g.id}','${g.location}')" class="flex-1 bg-amber-500 text-white text-[10px] font-black py-2 rounded-lg">Approve</button>` : ''}
-                            <button onclick="event.stopPropagation();vflow.generateStory('${g.location}','${g.time}',${g.maxPlayers},${g.price},'${g.createdBy}')" class="flex-1 bg-indigo-50 text-indigo-600 text-[10px] font-black py-2 rounded-lg uppercase">Story</button>
-                            <button onclick="event.stopPropagation();vflow.delGame('${g.id}')" class="flex-1 bg-red-50 text-red-500 text-[10px] font-black py-2 rounded-lg uppercase">Delete</button>
+                            <button onclick="event.stopPropagation();vflow.generateStory('${g.location}','${g.time}',${g.maxPlayers},${g.price},'${g.createdBy}')" class="flex-1 bg-indigo-50 text-indigo-600 text-[10px] py-2 rounded-lg">Story</button>
+                            <button onclick="event.stopPropagation();vflow.delGame('${g.id}')" class="flex-1 bg-red-50 text-red-500 text-[10px] py-2 rounded-lg">Delete</button>
                         </div>` : ''}</div>`;
                 }).join('');
             },
@@ -238,53 +234,52 @@
                 onSnapshot(doc(db, "games", id), (d) => {
                     if(!d.exists()) return; const g = d.data(); const isMgr = user?.role==='super'||user?.name===g.createdBy;
                     document.getElementById('main-content').innerHTML = `
-                        <button onclick="location.reload()" class="text-indigo-600 font-black text-xs mb-5 uppercase"><i class="fa-solid fa-arrow-left mr-1"></i> Back</button>
+                        <button onclick="location.reload()" class="text-indigo-600 font-black text-xs mb-5 uppercase">Back</button>
                         <div class="glass-card p-8 mb-6 bg-indigo-50">
                             <h2 class="text-3xl font-black italic">${g.location}</h2>
-                            <p class="text-sm font-bold text-indigo-600 mb-4">${g.time}</p>
-                            ${isMgr ? `<button onclick="vflow.copyWA('${id}','${g.location}','${g.time}', ${g.maxPlayers})" class="bg-slate-900 text-white text-[10px] px-4 py-2 rounded-full uppercase font-black">Copy List</button>` : ''}
+                            <p class="text-sm font-bold text-indigo-600">${g.time}</p>
+                            ${isMgr ? `<button onclick="vflow.copyWA('${id}','${g.location}','${g.time}', ${g.maxPlayers})" class="mt-4 bg-slate-900 text-white text-[10px] px-4 py-2 rounded-full uppercase">Copy List</button>` : ''}
                         </div>
-                        ${isMgr ? `<div class="glass-card p-6 mb-6 grid grid-cols-2 gap-4"><div class="bg-white p-3 rounded-xl border border-slate-100"><p class="text-[9px] font-black uppercase text-slate-400">已收</p><p class="text-xl font-black text-emerald-600" id="stat-paid">$0</p></div><div class="bg-white p-3 rounded-xl border border-slate-100"><p class="text-[9px] font-black uppercase text-slate-400">利潤</p><p class="text-xl font-black" id="stat-profit">$0</p></div></div>` : ''}
+                        ${isMgr ? `<div class="glass-card p-6 mb-6 grid grid-cols-2 gap-4"><div class="bg-white p-3 rounded-xl"><p class="text-[9px] uppercase">已收</p><p class="text-xl font-black text-emerald-600" id="stat-paid">$0</p></div><div class="bg-white p-3 rounded-xl"><p class="text-[9px] uppercase">預計利潤</p><p class="text-xl font-black" id="stat-profit">$0</p></div></div>` : ''}
                         <div class="glass-card p-8 mb-6">
-                            <div class="flex justify-between mb-4 items-center"><span class="font-black text-[10px] uppercase text-slate-400">Join Game</span><span id="p-count" class="font-black text-[10px] uppercase bg-indigo-50 text-indigo-600 px-3 py-1 rounded-md">Loading</span></div>
-                            <input id="nickname" type="text" placeholder="你的暱稱" class="input-light mb-3 text-center font-bold">
-                            <input id="ig" type="text" placeholder="@Instagram" class="input-light mb-5 text-center font-bold">
+                            <div class="flex justify-between mb-4"><span class="font-black text-[10px] uppercase">Registration</span><span id="p-count" class="font-black text-[10px] uppercase">0 / ${g.maxPlayers}</span></div>
+                            <input id="nickname" type="text" placeholder="暱稱" class="input-light mb-3 text-center">
+                            <input id="ig" type="text" placeholder="@Instagram" class="input-light mb-5 text-center">
                             <div class="grid grid-cols-1 gap-2 mb-6">${['Setter (二傳)','Outside Hitter (大搥)','Middle Blocker (快攻)','Opposite (接應)','Libero (自由人)'].map(p=>`<button data-pos="${p}" onclick="vflow.setPos('${p}')" class="pos-btn py-4 rounded-xl text-[10px] font-black uppercase">${p}</button>`).join('')}</div>
-                            <button onclick="vflow.prepJoin('${id}', ${g.price}, '${g.location}', '${g.time}', ${g.maxPlayers}, '${g.createdBy}')" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl uppercase shadow-lg">立刻報名 $${g.price}</button>
-                        </div><div id="player-list" class="space-y-3 pb-20"></div>`;
+                            <button onclick="vflow.prepJoin('${id}', ${g.price}, '${g.location}', '${g.time}', ${g.maxPlayers}, '${g.createdBy}')" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl uppercase">報名 $${g.price}</button>
+                        </div><div id="player-list" class="space-y-3"></div>`;
                     vflow.listenPlayers(id, isMgr, g.maxPlayers, g.price, g.cost||0);
                 });
             },
             listenPlayers: (gid, isMgr, max, price, cost) => {
                 onSnapshot(query(collection(db, `games/${gid}/players`), orderBy("timestamp", "asc")), (snap) => {
-                    const players = []; let paidCount = 0; snap.forEach(d => { const p = d.data(); players.push({id:d.id, ...p}); if(players.length<=max && p.status==='confirmed') paidCount++; });
+                    const players = []; let paid = 0; snap.forEach(d => { const p = d.data(); players.push({id:d.id, ...p}); if(players.length<=max && p.status==='confirmed') paid++; });
                     if(document.getElementById('p-count')) document.getElementById('p-count').innerText = `${players.length} / ${max}`;
-                    if(isMgr && document.getElementById('stat-paid')) { document.getElementById('stat-paid').innerText = `$${paidCount*price}`; document.getElementById('stat-profit').innerText = `$${(Math.min(players.length,max)*price)-cost}`; }
+                    if(isMgr && document.getElementById('stat-paid')) { document.getElementById('stat-paid').innerText = `$${paid*price}`; document.getElementById('stat-profit').innerText = `$${(Math.min(players.length,max)*price)-cost}`; }
                     if(isMgr) {
                         document.getElementById('player-list').innerHTML = players.map((p, i) => `<div class="glass-card p-4 flex justify-between items-center ${i>=max?'opacity-60 bg-amber-50':''}">
-                            <div><p class="font-black text-sm text-slate-800">${i>=max?'W'+(i-max+1):i+1}. ${p.nickname} (${p.ig})</p><p class="text-[9px] font-black uppercase ${p.status==='confirmed'?'text-emerald-500':'text-orange-500'}">${p.pos} - ${p.status.toUpperCase()}</p></div>
-                            <div class="flex gap-1"><button onclick="vflow.confirmP('${gid}','${p.id}')" class="bg-emerald-50 text-emerald-600 px-3 py-2 rounded-lg text-[9px] font-black">核實</button><button onclick="vflow.delP('${gid}','${p.id}')" class="bg-red-50 text-red-500 px-3 py-2 rounded-lg text-[9px] font-black">剔走</button>${p.receipt ? `<button onclick="vflow.viewReceipt('${p.receipt}')" class="bg-indigo-50 text-indigo-600 px-3 py-2 rounded-lg text-[9px] font-black">收據</button>` : ''}</div>
+                            <div><p class="font-black text-sm">${i>=max?'W'+(i-max+1):i+1}. ${p.nickname} (${p.ig})</p><p class="text-[9px] font-black uppercase ${p.status==='confirmed'?'text-emerald-500':'text-orange-500'}">${p.pos}</p></div>
+                            <div class="flex gap-1"><button onclick="vflow.confirmP('${gid}','${p.id}')" class="bg-emerald-50 text-emerald-600 px-2 py-1 rounded text-[9px] font-black">核實</button><button onclick="vflow.delP('${gid}','${p.id}')" class="bg-red-50 text-red-500 px-2 py-1 rounded text-[9px] font-black">剔走</button>${p.receipt ? `<button onclick="vflow.viewReceipt('${p.receipt}')" class="bg-indigo-50 px-2 py-1 rounded text-[9px] font-black uppercase">收據</button>` : ''}</div>
                         </div>`).join('');
-                    } else { document.getElementById('player-list').innerHTML = '<p class="text-center text-slate-400 text-[10px] py-10 font-black tracking-widest">PRIVATE LISTING</p>'; }
+                    } else { document.getElementById('player-list').innerHTML = '<p class="text-center text-slate-400 text-[10px] py-10 font-black">PRIVATE LIST</p>'; }
                 });
             },
             confirmP: async (gid, pid) => await updateDoc(doc(db, `games/${gid}/players`, pid), { status: "confirmed" }),
-            delP: async (gid, pid) => { if(confirm("確定剔走此球員？")) await deleteDoc(doc(db, `games/${gid}/players`, pid)); },
+            delP: async (gid, pid) => { if(confirm("剔走？")) await deleteDoc(doc(db, `games/${gid}/players`, pid)); },
             copyWA: async (gid, loc, time, max) => {
                 const snap=await getDocs(query(collection(db, `games/${gid}/players`), orderBy("timestamp", "asc")));
                 let txt=`🏐 *VOLLEYFLOW 名單*\n📍 ${loc}\n⏰ ${time}\n\n`;
-                let i=0; snap.forEach(d=>{ const p=d.data(); if(i===max) txt+=`\n--- ⏳ 後補 ---\n`; txt+=`${i>=max?'W'+(i-max+1):i+1}. ${p.nickname} (${p.ig}) - ${p.pos} ${p.status==='confirmed'?'✅':'⏳'}\n`; i++; });
-                navigator.clipboard.writeText(txt); alert("名單已複製到剪貼簿");
+                let i=0; snap.forEach(d=>{ const p=d.data(); if(i===max) txt+=`\n--- 後補 ---\n`; txt+=`${i>=max?'W'+(i-max+1):i+1}. ${p.nickname} (${p.ig}) - ${p.pos} ${p.status==='confirmed'?'✅':'⏳'}\n`; i++; });
+                navigator.clipboard.writeText(txt); alert("已複製");
             }
         };
 
-        // --- 登入與管理員狀態監控 ---
         if (user) {
             document.getElementById('admin-status').innerHTML = `
                 <div class="flex flex-col items-center">
-                    <span class="bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-sm">LOGGED AS: ${user.name}</span>
+                    <span class="bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest">Org: ${user.name}</span>
                     <div class="flex gap-4 mt-2">
-                        <button onclick="vflow.changeSelfPw()" class="text-[9px] font-black text-slate-400 uppercase underline">Change Password</button>
+                        <button onclick="vflow.changeSelfPw()" class="text-[9px] font-black text-slate-400 uppercase underline">改密碼</button>
                         <button onclick="sessionStorage.clear();location.reload();" class="text-[9px] font-black text-red-400 uppercase">Logout</button>
                     </div>
                 </div>`;
