@@ -19,87 +19,88 @@
             -webkit-tap-highlight-color: transparent; 
         }
 
-        /* 專業水印：隱性化設計 */
-        .watermark-bg {
-            position: relative;
-        }
+        /* 隱性化水印 */
+        .watermark-bg { position: relative; }
         .watermark-bg::before {
-            content: "VOLLEYBALLFLOW PRO SYSTEM";
+            content: "VOLLEYBALLFLOW PRO";
             position: absolute;
-            top: 5px;
-            right: 15px;
-            font-size: 8px;
-            font-weight: 800;
+            top: 5px; right: 15px;
+            font-size: 8px; font-weight: 800;
             color: rgba(0, 0, 0, 0.03);
-            letter-spacing: 2px;
-            pointer-events: none;
+            letter-spacing: 2px; pointer-events: none;
         }
 
-        /* 極簡卡片：線條感取代陰影 */
         .premium-card {
             background: #fff;
             border: 1px solid #e5e5e5;
             border-radius: 12px;
             transition: all 0.25s ease;
         }
-        .premium-card:hover {
-            border-color: #000;
-        }
 
-        /* 專業按鈕 */
         .btn-black {
-            background: #000;
-            color: #fff;
-            border-radius: 8px;
-            font-weight: 600;
-            letter-spacing: 1px;
-            transition: all 0.2s;
+            background: #000; color: #fff;
+            border-radius: 8px; font-weight: 600;
+            letter-spacing: 1px; transition: all 0.2s;
+            display: flex; align-items: center; justify-content: center;
         }
         .btn-black:active { transform: scale(0.98); }
 
         .btn-outline {
-            border: 1px solid #e5e5e5;
-            border-radius: 8px;
-            font-weight: 600;
-            transition: all 0.2s;
+            border: 1px solid #e5e5e5; border-radius: 8px;
+            font-weight: 600; transition: all 0.2s;
         }
-        .btn-outline.selected {
-            background: #000;
-            color: #fff;
-            border-color: #000;
-        }
+        .btn-outline.selected { background: #000; color: #fff; border-color: #000; }
 
-        /* 輸入框 */
         .input-flat {
-            width: 100%;
-            border: 1px solid #e5e5e5;
-            padding: 14px;
-            border-radius: 8px;
-            font-size: 14px;
-            outline: none;
-            transition: border-color 0.2s;
+            width: 100%; border: 1px solid #e5e5e5;
+            padding: 14px; border-radius: 8px;
+            font-size: 14px; outline: none; transition: border-color 0.2s;
+            background: #fff;
         }
         .input-flat:focus { border-color: #000; }
 
-        /* 抽屜式菜單優化 */
+        /* 特殊處理日期欄位，解決睇唔到日期嘅問題 */
+        .date-input-container {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
+        .date-input-container i {
+            position: absolute;
+            right: 12px;
+            color: #a3a3a3;
+            pointer-events: none;
+            font-size: 12px;
+        }
+        input[type="date"] {
+            -webkit-appearance: none;
+            min-height: 48px;
+        }
+        /* 當未選取日期時顯示提示文字 */
+        input[type="date"]::before {
+            content: attr(placeholder);
+            width: 100%;
+            color: #a3a3a3;
+            font-size: 11px;
+            font-weight: 600;
+        }
+        input[type="date"]:focus::before,
+        input[type="date"]:valid::before {
+            display: none;
+        }
+
         .bottom-sheet {
             position: fixed; left: 0; right: 0; bottom: 0;
-            background: #fff;
-            border-top: 1px solid #eee;
+            background: #fff; border-top: 1px solid #eee;
             transform: translateY(100%);
             transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 1000;
-            padding: 30px 20px;
+            z-index: 1000; padding: 30px 20px;
         }
         .bottom-sheet.open { transform: translateY(0); }
 
-        /* 排版微調 */
         .section-title {
-            font-size: 10px;
-            font-weight: 800;
-            text-transform: uppercase;
-            letter-spacing: 3px;
-            color: #a3a3a3;
+            font-size: 10px; font-weight: 800;
+            text-transform: uppercase; letter-spacing: 3px; color: #a3a3a3;
         }
     </style>
 </head>
@@ -131,14 +132,21 @@
                 <h3 class="section-title mb-6">Create New Event</h3>
                 <div class="space-y-4">
                     <input id="new_loc" type="text" placeholder="體育館名稱" class="input-flat">
+                    
                     <div class="grid grid-cols-2 gap-4">
-                        <input id="new_date" type="date" class="input-flat text-xs">
+                        <div class="date-input-container">
+                            <input id="new_date" type="date" required placeholder="SELECT DATE" class="input-flat text-xs">
+                            <i class="fa-regular fa-calendar"></i>
+                        </div>
+                        
                         <div class="flex gap-1">
                             <input id="start_time" type="time" value="19:00" class="input-flat !p-2 text-xs">
                             <input id="end_time" type="time" value="21:00" class="input-flat !p-2 text-xs">
                         </div>
                     </div>
+
                     <textarea id="new_desc" placeholder="場地或規則描述..." class="input-flat h-20 resize-none"></textarea>
+                    
                     <div class="grid grid-cols-3 gap-4">
                         <div><label class="section-title !tracking-widest !text-[8px]">Max</label><input id="new_max" type="number" value="15" class="input-flat font-bold"></div>
                         <div><label class="section-title !tracking-widest !text-[8px]">Price</label><input id="new_price" type="number" value="30" class="input-flat font-bold"></div>
@@ -146,12 +154,12 @@
                     </div>
                     
                     <div class="pt-4 border-t border-gray-100">
-                        <p class="section-title mb-4">Settings</p>
+                        <p class="section-title mb-4">Payment Settings</p>
                         <div class="space-y-2">
                             <input id="pay_url_input" type="text" placeholder="PayMe 連結" class="input-flat !py-2 text-xs">
                             <div class="flex items-center gap-2">
                                 <input id="pay_img_input" type="file" class="text-[10px] flex-1">
-                                <button onclick="vflow.updatePayUrl(); vflow.uploadPayImg();" class="text-[10px] font-bold underline">Update Payment</button>
+                                <button onclick="vflow.updatePayUrl(); vflow.uploadPayImg();" class="text-[10px] font-bold underline">Update</button>
                             </div>
                         </div>
                     </div>
@@ -166,7 +174,7 @@
             <div class="bg-white w-full max-w-sm rounded-lg overflow-hidden">
                 <img id="story_preview" src="" class="w-full">
                 <div class="p-6 space-y-3">
-                    <a id="story_download_btn" href="#" download="story.png" class="block w-full btn-black text-center py-4 text-xs uppercase">Download for Instagram</a>
+                    <a id="story_download_btn" href="#" download="story.png" class="block w-full btn-black text-center py-4 text-xs uppercase">Download Image</a>
                     <button onclick="document.getElementById('story_modal').classList.add('hidden')" class="w-full text-gray-400 font-bold text-[10px] uppercase">Close</button>
                 </div>
             </div>
@@ -174,9 +182,9 @@
 
         <div id="login_modal" class="hidden fixed inset-0 bg-white flex items-center justify-center p-10 z-[3000]">
             <div class="w-full max-w-xs">
-                <h3 class="text-2xl font-extrabold mb-10 tracking-tighter">ADMIN ACCESS.</h3>
+                <h3 class="text-2xl font-extrabold mb-10 tracking-tighter">ADMIN.</h3>
                 <input id="login_u" type="text" placeholder="ID" class="input-flat mb-4">
-                <input id="login_p" type="password" placeholder="PASSWORD" class="input-flat mb-10">
+                <input id="login_p" type="password" placeholder="PW" class="input-flat mb-10">
                 <button onclick="vflow.login()" class="w-full btn-black py-4 uppercase text-xs">Login</button>
                 <button onclick="vflow.closeLogin()" class="w-full mt-4 text-gray-300 text-[10px] uppercase">Back</button>
             </div>
@@ -191,7 +199,7 @@
     <div id="bottom-sheet" class="bottom-sheet">
         <div class="max-w-md mx-auto">
             <div class="flex justify-between items-center mb-10">
-                <h3 class="text-xl font-bold tracking-tighter uppercase">Registration</h3>
+                <h3 class="text-xl font-bold tracking-tighter uppercase">Register</h3>
                 <span class="text-2xl font-light" id="sheet-price">$0</span>
             </div>
             
@@ -205,14 +213,14 @@
 
             <div class="space-y-6">
                 <div>
-                    <label class="section-title block mb-3">Upload Receipt</label>
+                    <label class="section-title block mb-3">Receipt Screenshot</label>
                     <div class="border border-dashed border-gray-200 rounded-lg p-8 text-center relative hover:bg-gray-50 cursor-pointer">
                         <input type="file" id="receipt_input" accept="image/*" class="absolute inset-0 opacity-0 cursor-pointer" onchange="vflow.previewReceipt(this)">
-                        <div id="receipt_placeholder" class="text-gray-400 text-xs font-medium">Click to select screenshot</div>
+                        <div id="receipt_placeholder" class="text-gray-400 text-xs font-medium">Tap to upload receipt</div>
                         <img id="receipt_thumbnail" src="" class="hidden h-32 mx-auto rounded">
                     </div>
                 </div>
-                <button id="btn-submit-reg" onclick="vflow.executeJoin()" class="w-full btn-black py-4 uppercase text-xs opacity-30 pointer-events-none">Confirm Submission</button>
+                <button id="btn-submit-reg" onclick="vflow.executeJoin()" class="w-full btn-black py-4 uppercase text-xs opacity-30 pointer-events-none">Confirm</button>
                 <button onclick="vflow.closeSheet()" class="w-full text-gray-300 text-[10px] uppercase font-bold">Cancel</button>
             </div>
         </div>
@@ -240,17 +248,17 @@
                 const p = document.getElementById('login_p').value.trim();
                 if(u==="Manusyip" && p==="Manusyip0830") { sessionStorage.setItem('vf_user', JSON.stringify({name:u, role:'super'})); location.reload(); return; }
                 const snap = await getDocs(query(collection(db, "admins"), where("username", "==", u), where("password", "==", p)));
-                if(!snap.empty) { sessionStorage.setItem('vf_user', JSON.stringify({name:u, role:'normal'})); location.reload(); } else alert("Error");
+                if(!snap.empty) { sessionStorage.setItem('vf_user', JSON.stringify({name:u, role:'normal'})); location.reload(); } else alert("Access Denied");
             },
             openSheet: () => { document.getElementById('bottom-sheet').classList.add('open'); document.getElementById('sheet-overlay').classList.replace('opacity-0','opacity-100'); document.getElementById('sheet-overlay').classList.replace('pointer-events-none','pointer-events-auto'); },
             closeSheet: () => { document.getElementById('bottom-sheet').classList.remove('open'); document.getElementById('sheet-overlay').classList.replace('opacity-100','opacity-0'); document.getElementById('sheet-overlay').classList.replace('pointer-events-auto','pointer-events-none'); },
-            updatePayUrl: async () => { if(user) await setDoc(doc(db, "admins", user.name), { payUrl: document.getElementById('pay_url_input').value }, { merge: true }); },
+            updatePayUrl: async () => { if(user) { await setDoc(doc(db, "admins", user.name), { payUrl: document.getElementById('pay_url_input').value }, { merge: true }); alert("Updated!"); } },
             uploadPayImg: function() { if(!user) return; const file = document.getElementById('pay_img_input').files[0]; if(!file) return; const reader = new FileReader(); reader.onloadend = async () => { await setDoc(doc(db, "admins", user.name), { payImg: reader.result }, { merge: true }); }; reader.readAsDataURL(file); },
 
             createGame: async () => { 
                 const loc = document.getElementById('new_loc').value.trim(); 
                 const dateVal = document.getElementById('new_date').value; 
-                if(!loc||!dateVal) return alert("Empty fields");
+                if(!loc||!dateVal) return alert("Please fill details");
                 const weekDay = ["日","一","二","三","四","五","六"][new Date(dateVal).getDay()];
                 const fullTime = `${dateVal} (${weekDay}) ${document.getElementById('start_time').value} - ${document.getElementById('end_time').value}`;
                 await addDoc(collection(db, "games"), { 
@@ -272,9 +280,9 @@
                     <div onclick="vflow.goToGame('${g.id}')" class="premium-card p-8 watermark-bg">
                         <div class="flex justify-between items-start mb-10">
                             <span class="section-title !text-indigo-600">${g.time}</span>
-                            <span class="text-[8px] font-bold text-gray-300">ORG / ${g.createdBy.toUpperCase()}</span>
+                            <span class="text-[8px] font-bold text-gray-300">@${g.createdBy.toUpperCase()}</span>
                         </div>
-                        <h3 class="text-2xl font-extrabold tracking-tight mb-8">${g.location.toUpperCase()}</h3>
+                        <h3 class="text-2xl font-extrabold tracking-tight mb-8 uppercase">${g.location}</h3>
                         ${(user?.role==='super'||user?.name===g.createdBy) ? `
                         <div class="flex gap-4 border-t border-gray-100 pt-6 mt-4">
                             ${(user?.role==='super' && !g.approved) ? `<button onclick="event.stopPropagation();vflow.approveGame('${g.id}')" class="text-[10px] font-extrabold text-emerald-500">APPROVE</button>` : ''}
@@ -297,21 +305,20 @@
                                 <span class="section-title !text-indigo-600">${g.time}</span>
                                 <span id="p-count" class="text-xs font-bold">0 / ${g.maxPlayers}</span>
                             </div>
-                            <p class="mt-6 text-sm text-gray-400 font-medium leading-relaxed">${g.description || 'No additional details provided.'}</p>
+                            <p class="mt-6 text-sm text-gray-400 font-medium leading-relaxed">${g.description || ''}</p>
                         </div>
 
                         <div class="premium-card p-8 mb-12">
                             <div class="grid grid-cols-1 gap-4 mb-8">
-                                <input id="nickname" type="text" placeholder="DISPLAY NAME" class="input-flat">
+                                <input id="nickname" type="text" placeholder="NICKNAME / 暱稱" class="input-flat">
                                 <input id="ig" type="text" placeholder="INSTAGRAM (@...)" class="input-flat">
                             </div>
                             <div class="space-y-2 mb-8">
                                 ${['Setter (二傳)','Outside Hitter (大搥)','Middle Blocker (快攻)','Opposite (接應)','Libero (自由人)'].map(p=>`<button data-pos="${p}" onclick="vflow.setPos('${p}')" class="pos-btn btn-outline w-full py-4 text-[10px] uppercase tracking-widest">${p}</button>`).join('')}
                             </div>
-                            <button onclick="vflow.prepJoin('${id}', ${g.price}, '${g.location}', '${g.time}', ${g.maxPlayers}, '${g.createdBy}')" class="w-full btn-black py-5 uppercase text-xs">Join Session $${g.price}</button>
+                            <button onclick="vflow.prepJoin('${id}', ${g.price}, '${g.location}', '${g.time}', ${g.maxPlayers}, '${g.createdBy}')" class="w-full btn-black py-5 uppercase text-xs">Join $${g.price}</button>
                         </div>
-
-                        <div id="player-list" class="space-y-4"></div>
+                        <div id="player-list" class="space-y-4 pb-20"></div>
                     `;
                     vflow.listenPlayers(id, isMgr, g.maxPlayers);
                 });
@@ -326,16 +333,16 @@
                             <div class="premium-card p-5 flex justify-between items-center ${index >= max ? 'bg-gray-50' : ''}">
                                 <div>
                                     <p class="text-sm font-extrabold uppercase">${index+1}. ${p.nickname || p.ig}</p>
-                                    <p class="text-[8px] font-bold text-gray-400 mt-1 uppercase">${p.pos} / ${p.status}</p>
+                                    <p class="text-[8px] font-bold text-gray-400 mt-1 uppercase">${p.pos} | ${p.status}</p>
                                 </div>
                                 <div class="flex gap-4">
                                     <button onclick="vflow.confirmP('${gid}','${p.id}')" class="text-[10px] font-bold text-emerald-500">OK</button>
                                     <button onclick="vflow.delP('${gid}','${p.id}')" class="text-[10px] font-bold text-red-300">DEL</button>
-                                    ${p.receipt ? `<button onclick="vflow.viewReceipt('${p.receipt}')" class="text-[10px] font-bold">IMAGE</button>` : ''}
+                                    ${p.receipt ? `<button onclick="vflow.viewReceipt('${p.receipt}')" class="text-[10px] font-bold">REC</button>` : ''}
                                 </div>
                             </div>`).join('');
                     } else {
-                        document.getElementById('player-list').innerHTML = `<p class="section-title text-center py-10">Private Roster</p>`;
+                        document.getElementById('player-list').innerHTML = `<p class="section-title text-center py-10">Private List</p>`;
                     }
                 });
             },
@@ -368,11 +375,11 @@
             prepJoin: async (gid, pr, loc, time, maxLimit, createdBy) => {
                 const ig = document.getElementById('ig').value.trim();
                 const nick = document.getElementById('nickname').value.trim();
-                if(!ig.startsWith('@') || !nick || selectedPositions.length===0) return alert("Check inputs");
+                if(!ig.startsWith('@') || !nick || selectedPositions.length===0) return alert("Incomplete Info");
                 const adminDoc = await getDoc(doc(db, "admins", createdBy));
                 const orgData = adminDoc.data() || {};
-                document.getElementById('content-payme').innerHTML = orgData.payUrl ? `<a href="${orgData.payUrl}" target="_blank" class="btn-black inline-block px-10 py-4 text-[10px]">OPEN PAYME</a>` : 'N/A';
-                document.getElementById('content-alipay').innerHTML = orgData.payImg ? `<img src="${orgData.payImg}" class="w-40 mx-auto rounded border">` : 'N/A';
+                document.getElementById('content-payme').innerHTML = orgData.payUrl ? `<a href="${orgData.payUrl}" target="_blank" class="btn-black w-48 mx-auto py-4 text-[10px]">OPEN PAYME</a>` : 'No URL';
+                document.getElementById('content-alipay').innerHTML = orgData.payImg ? `<img src="${orgData.payImg}" class="w-40 mx-auto rounded border">` : 'No Image';
                 document.getElementById('sheet-price').innerText = `$${pr}`;
                 tempJoinData = { gid, ig, nickname: nick, pos: selectedPositions.join(' & ') };
                 vflow.openSheet();
@@ -381,7 +388,7 @@
             executeJoin: async () => {
                 const file = document.getElementById('receipt_input').files[0];
                 const btn = document.getElementById('btn-submit-reg');
-                btn.innerText = "..."; btn.disabled = true;
+                btn.innerText = "WAIT..."; btn.disabled = true;
                 const base64Img = await vflow.compressImg(file);
                 await addDoc(collection(db, `games/${tempJoinData.gid}/players`), { 
                     ...tempJoinData, status: "pending", receipt: base64Img, timestamp: serverTimestamp() 
@@ -395,7 +402,7 @@
                 ctx.textAlign='center'; ctx.fillStyle='#000';
                 ctx.font='900 100px Urbanist'; ctx.fillText('VOLLEYFLOW.', 540, 300);
                 ctx.font='600 30px Urbanist'; ctx.fillText(`ORG: @${org.toUpperCase()}`, 540, 380);
-                ctx.font='900 90px Urbanist'; ctx.fillText(loc.toUpperCase(), 540, 850);
+                ctx.font='900 85px Urbanist'; ctx.fillText(loc.toUpperCase(), 540, 850);
                 ctx.font='400 45px Urbanist'; ctx.fillText(time, 540, 950);
                 ctx.font='800 80px Urbanist'; ctx.fillText(`ENTRY $${price}`, 540, 1200);
                 document.getElementById('story_preview').src = cvs.toDataURL();
@@ -403,17 +410,18 @@
                 document.getElementById('story_modal').classList.remove('hidden');
             },
 
-            approveGame: async (id) => { await updateDoc(doc(db, "games", id), { approved: true }); },
+            approveGame: async (id) => await updateDoc(doc(db, "games", id), { approved: true }),
             delGame: async (id) => { if(confirm("DEL?")) await deleteDoc(doc(db, "games", id)); },
             confirmP: async (gid, pid) => await updateDoc(doc(db, `games/${gid}/players`, pid), { status: "confirmed" }),
             delP: async (gid, pid) => { if(confirm("DEL?")) await deleteDoc(doc(db, `games/${gid}/players`, pid)); },
-            viewReceipt: (b64) => { document.getElementById('receipt_display_img').src = b64; document.getElementById('receipt_modal').classList.remove('hidden'); }
+            viewReceipt: (b64) => { document.getElementById('receipt_display_img').src = b64; document.getElementById('receipt_modal').classList.remove('hidden'); },
+            addAdminAccount: async () => { const u=document.getElementById('new_admin_u').value.trim(); const p=document.getElementById('new_admin_p').value.trim(); if(!u||!p) return; await setDoc(doc(db, "admins", u), { username:u, password:p, role:'organizer' }); location.reload(); }
         };
 
         if (user) { 
             document.getElementById('admin-status').innerHTML = `<span class="section-title text-black">${user.name}</span><button onclick="sessionStorage.clear();location.reload();" class="ml-4 text-[8px] font-extrabold text-gray-300">EXIT</button>`; 
             document.getElementById('admin-panel').classList.remove('hidden'); 
-            if(user.role==='super') { document.getElementById('super-admin-tools').classList.remove('hidden'); } 
+            if(user.role==='super') document.getElementById('super-admin-tools').classList.remove('hidden');
         }
         onSnapshot(query(collection(db, "games"), orderBy("timestamp", "desc")), (snap) => { const games=[]; snap.forEach(d=>games.push({id:d.id, ...d.data()})); if(currentView==='list') vflow.renderList(games); });
     </script>
