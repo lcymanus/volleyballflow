@@ -12,99 +12,46 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <style>
-        body { 
-            background: #ffffff; 
-            color: #1a1a1a; 
-            font-family: 'Urbanist', sans-serif; 
-            -webkit-tap-highlight-color: transparent; 
-        }
-
-        /* 隱性化水印 */
+        body { background: #ffffff; color: #1a1a1a; font-family: 'Urbanist', sans-serif; -webkit-tap-highlight-color: transparent; }
         .watermark-bg { position: relative; }
         .watermark-bg::before {
-            content: "VOLLEYBALLFLOW PRO";
-            position: absolute;
-            top: 5px; right: 15px;
-            font-size: 8px; font-weight: 800;
-            color: rgba(0, 0, 0, 0.03);
-            letter-spacing: 2px; pointer-events: none;
+            content: "VOLLEYBALLFLOW PRO"; position: absolute; top: 5px; right: 15px;
+            font-size: 8px; font-weight: 800; color: rgba(0, 0, 0, 0.03); letter-spacing: 2px; pointer-events: none;
         }
-
-        .premium-card {
-            background: #fff;
-            border: 1px solid #e5e5e5;
-            border-radius: 12px;
-            transition: all 0.25s ease;
-        }
-
-        .btn-black {
-            background: #000; color: #fff;
-            border-radius: 8px; font-weight: 600;
-            letter-spacing: 1px; transition: all 0.2s;
-            display: flex; align-items: center; justify-content: center;
-        }
+        .premium-card { background: #fff; border: 1px solid #e5e5e5; border-radius: 12px; transition: all 0.25s ease; }
+        .btn-black { background: #000; color: #fff; border-radius: 8px; font-weight: 600; letter-spacing: 1px; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
         .btn-black:active { transform: scale(0.98); }
-
-        .btn-outline {
-            border: 1px solid #e5e5e5; border-radius: 8px;
-            font-weight: 600; transition: all 0.2s;
-        }
+        .btn-outline { border: 1px solid #e5e5e5; border-radius: 8px; font-weight: 600; transition: all 0.2s; }
         .btn-outline.selected { background: #000; color: #fff; border-color: #000; }
-
-        .input-flat {
-            width: 100%; border: 1px solid #e5e5e5;
-            padding: 14px; border-radius: 8px;
-            font-size: 14px; outline: none; transition: border-color 0.2s;
-            background: #fff;
-        }
+        .input-flat { width: 100%; border: 1px solid #e5e5e5; padding: 14px; border-radius: 8px; font-size: 14px; outline: none; transition: all 0.2s; background: #fff; }
         .input-flat:focus { border-color: #000; }
+        .input-error { border-color: #ef4444 !important; background: #fef2f2; }
 
-        /* 特殊處理日期欄位，解決睇唔到日期嘅問題 */
-        .date-input-container {
-            position: relative;
-            display: flex;
-            align-items: center;
+        /* 通知彈窗樣式 */
+        #toast {
+            position: fixed; top: 20px; left: 50%; transform: translateX(-50%) translateY(-100px);
+            background: #000; color: #fff; padding: 12px 24px; border-radius: 50px;
+            font-size: 12px; font-weight: 600; letter-spacing: 1px; z-index: 5000;
+            transition: transform 0.4s cubic-bezier(0.17, 0.67, 0.83, 0.67);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
         }
-        .date-input-container i {
-            position: absolute;
-            right: 12px;
-            color: #a3a3a3;
-            pointer-events: none;
-            font-size: 12px;
-        }
-        input[type="date"] {
-            -webkit-appearance: none;
-            min-height: 48px;
-        }
-        /* 當未選取日期時顯示提示文字 */
-        input[type="date"]::before {
-            content: attr(placeholder);
-            width: 100%;
-            color: #a3a3a3;
-            font-size: 11px;
-            font-weight: 600;
-        }
-        input[type="date"]:focus::before,
-        input[type="date"]:valid::before {
-            display: none;
-        }
+        #toast.show { transform: translateX(-50%) translateY(0); }
 
-        .bottom-sheet {
-            position: fixed; left: 0; right: 0; bottom: 0;
-            background: #fff; border-top: 1px solid #eee;
-            transform: translateY(100%);
-            transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            z-index: 1000; padding: 30px 20px;
-        }
+        /* 日期修復 */
+        .date-input-container { position: relative; display: flex; align-items: center; }
+        .date-input-container i { position: absolute; right: 12px; color: #a3a3a3; pointer-events: none; font-size: 12px; }
+        input[type="date"] { -webkit-appearance: none; min-height: 48px; }
+        input[type="date"]::before { content: attr(placeholder); width: 100%; color: #a3a3a3; font-size: 11px; font-weight: 600; }
+        input[type="date"]:focus::before, input[type="date"]:valid::before { display: none; }
+
+        .bottom-sheet { position: fixed; left: 0; right: 0; bottom: 0; background: #fff; border-top: 1px solid #eee; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1); z-index: 1000; padding: 30px 20px; }
         .bottom-sheet.open { transform: translateY(0); }
-
-        .section-title {
-            font-size: 10px; font-weight: 800;
-            text-transform: uppercase; letter-spacing: 3px; color: #a3a3a3;
-        }
+        .section-title { font-size: 10px; font-weight: 800; text-transform: uppercase; letter-spacing: 3px; color: #a3a3a3; }
     </style>
 </head>
 <body class="p-6 pb-24">
+
+    <div id="toast">MESSAGE</div>
 
     <div id="app-root" class="max-w-md mx-auto">
         <header class="mb-16 mt-8 flex justify-between items-end">
@@ -132,34 +79,29 @@
                 <h3 class="section-title mb-6">Create New Event</h3>
                 <div class="space-y-4">
                     <input id="new_loc" type="text" placeholder="體育館名稱" class="input-flat">
-                    
                     <div class="grid grid-cols-2 gap-4">
                         <div class="date-input-container">
                             <input id="new_date" type="date" required placeholder="SELECT DATE" class="input-flat text-xs">
                             <i class="fa-regular fa-calendar"></i>
                         </div>
-                        
                         <div class="flex gap-1">
                             <input id="start_time" type="time" value="19:00" class="input-flat !p-2 text-xs">
                             <input id="end_time" type="time" value="21:00" class="input-flat !p-2 text-xs">
                         </div>
                     </div>
-
                     <textarea id="new_desc" placeholder="場地或規則描述..." class="input-flat h-20 resize-none"></textarea>
-                    
                     <div class="grid grid-cols-3 gap-4">
                         <div><label class="section-title !tracking-widest !text-[8px]">Max</label><input id="new_max" type="number" value="15" class="input-flat font-bold"></div>
                         <div><label class="section-title !tracking-widest !text-[8px]">Price</label><input id="new_price" type="number" value="30" class="input-flat font-bold"></div>
                         <div><label class="section-title !tracking-widest !text-[8px]">Cost</label><input id="new_cost" type="number" value="0" class="input-flat font-bold text-red-500"></div>
                     </div>
-                    
                     <div class="pt-4 border-t border-gray-100">
                         <p class="section-title mb-4">Payment Settings</p>
                         <div class="space-y-2">
                             <input id="pay_url_input" type="text" placeholder="PayMe 連結" class="input-flat !py-2 text-xs">
                             <div class="flex items-center gap-2">
                                 <input id="pay_img_input" type="file" class="text-[10px] flex-1">
-                                <button onclick="vflow.updatePayUrl(); vflow.uploadPayImg();" class="text-[10px] font-bold underline">Update</button>
+                                <button onclick="vflow.updatePaySettings()" class="text-[10px] font-bold underline">Update Payment</button>
                             </div>
                         </div>
                     </div>
@@ -174,7 +116,7 @@
             <div class="bg-white w-full max-w-sm rounded-lg overflow-hidden">
                 <img id="story_preview" src="" class="w-full">
                 <div class="p-6 space-y-3">
-                    <a id="story_download_btn" href="#" download="story.png" class="block w-full btn-black text-center py-4 text-xs uppercase">Download Image</a>
+                    <a id="story_download_btn" href="#" download="story.png" class="block w-full btn-black text-center py-4 text-xs uppercase">Download</a>
                     <button onclick="document.getElementById('story_modal').classList.add('hidden')" class="w-full text-gray-400 font-bold text-[10px] uppercase">Close</button>
                 </div>
             </div>
@@ -191,7 +133,7 @@
         </div>
 
         <div id="receipt_modal" class="hidden fixed inset-0 bg-black/95 flex items-center justify-center p-4 z-[4000]" onclick="this.classList.add('hidden')">
-            <img id="receipt_display_img" src="" class="max-w-full max-h-[80vh] border-2 border-white/20">
+            <img id="receipt_display_img" src="" class="max-w-full max-h-[80vh]">
         </div>
     </div>
 
@@ -202,15 +144,12 @@
                 <h3 class="text-xl font-bold tracking-tighter uppercase">Register</h3>
                 <span class="text-2xl font-light" id="sheet-price">$0</span>
             </div>
-            
             <div class="flex gap-4 border-b border-gray-100 pb-8 mb-8">
                 <button id="tab-payme" onclick="vflow.switchPayTab('payme')" class="text-[10px] font-extrabold border-b-2 border-black pb-1">PAYME</button>
                 <button id="tab-alipay" onclick="vflow.switchPayTab('alipay')" class="text-[10px] font-extrabold text-gray-300 pb-1">ALIPAY</button>
             </div>
-
             <div id="content-payme" class="mb-10 text-center"></div>
             <div id="content-alipay" class="hidden mb-10 text-center"></div>
-
             <div class="space-y-6">
                 <div>
                     <label class="section-title block mb-3">Receipt Screenshot</label>
@@ -220,7 +159,7 @@
                         <img id="receipt_thumbnail" src="" class="hidden h-32 mx-auto rounded">
                     </div>
                 </div>
-                <button id="btn-submit-reg" onclick="vflow.executeJoin()" class="w-full btn-black py-4 uppercase text-xs opacity-30 pointer-events-none">Confirm</button>
+                <button id="btn-submit-reg" onclick="vflow.executeJoin()" class="w-full btn-black py-4 uppercase text-xs opacity-30 pointer-events-none">Confirm Submission</button>
                 <button onclick="vflow.closeSheet()" class="w-full text-gray-300 text-[10px] uppercase font-bold">Cancel</button>
             </div>
         </div>
@@ -233,13 +172,18 @@
         const firebaseConfig = { apiKey: "AIzaSyBTd2xfvfNxoaD9irEx-W4B5gptzC-Mon0", authDomain: "volleyballflow-7cf02.firebaseapp.com", projectId: "volleyballflow-7cf02", storageBucket: "volleyballflow-7cf02.firebasestorage.app", messagingSenderId: "1032620495700", appId: "1:1032620495700:web:c2d84f02e435d99e15eec1" };
         const app = initializeApp(firebaseConfig); 
         const db = initializeFirestore(app, { localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()}) });
-        const TG_CONFIG = { token: "8740891593:AAENShXduM8xMG1RMzKGGrO2L0exDQ_rPbM", chatId: "6503453177" };
 
         let user = JSON.parse(sessionStorage.getItem('vf_user')); 
         let currentView = 'list'; let selectedPositions = []; let secretClicks = 0; let tempJoinData = null;
 
         window.vflow = {
-            sendTG: async (msg) => { try { await fetch(`https://api.telegram.org/bot${TG_CONFIG.token}/sendMessage?chat_id=${TG_CONFIG.chatId}&text=${encodeURIComponent(msg)}`); } catch(e){} },
+            showToast: (msg, isError = false) => {
+                const t = document.getElementById('toast');
+                t.innerText = msg;
+                t.style.background = isError ? '#ef4444' : '#000';
+                t.classList.add('show');
+                setTimeout(() => t.classList.remove('show'), 3000);
+            },
             compressImg: (file) => new Promise(resolve => { const r = new FileReader(); r.onload = e => { const img = new Image(); img.onload = () => { const cvs = document.createElement('canvas'); const max = 800; const scale = img.width > max ? max / img.width : 1; cvs.width = img.width * scale; cvs.height = img.height * scale; const ctx = cvs.getContext('2d'); ctx.drawImage(img, 0, 0, cvs.width, cvs.height); resolve(cvs.toDataURL('image/jpeg', 0.6)); }; img.src = e.target.result; }; r.readAsDataURL(file); }),
             clickSecret: () => { secretClicks++; if(secretClicks===4){ document.getElementById('login_modal').classList.remove('hidden'); secretClicks=0; } setTimeout(()=>secretClicks=0, 3000); },
             closeLogin: () => { document.getElementById('login_modal').classList.add('hidden'); },
@@ -248,17 +192,36 @@
                 const p = document.getElementById('login_p').value.trim();
                 if(u==="Manusyip" && p==="Manusyip0830") { sessionStorage.setItem('vf_user', JSON.stringify({name:u, role:'super'})); location.reload(); return; }
                 const snap = await getDocs(query(collection(db, "admins"), where("username", "==", u), where("password", "==", p)));
-                if(!snap.empty) { sessionStorage.setItem('vf_user', JSON.stringify({name:u, role:'normal'})); location.reload(); } else alert("Access Denied");
+                if(!snap.empty) { sessionStorage.setItem('vf_user', JSON.stringify({name:u, role:'normal'})); location.reload(); } 
+                else vflow.showToast("登入失敗：帳號或密碼錯誤", true);
             },
             openSheet: () => { document.getElementById('bottom-sheet').classList.add('open'); document.getElementById('sheet-overlay').classList.replace('opacity-0','opacity-100'); document.getElementById('sheet-overlay').classList.replace('pointer-events-none','pointer-events-auto'); },
             closeSheet: () => { document.getElementById('bottom-sheet').classList.remove('open'); document.getElementById('sheet-overlay').classList.replace('opacity-100','opacity-0'); document.getElementById('sheet-overlay').classList.replace('pointer-events-auto','pointer-events-none'); },
-            updatePayUrl: async () => { if(user) { await setDoc(doc(db, "admins", user.name), { payUrl: document.getElementById('pay_url_input').value }, { merge: true }); alert("Updated!"); } },
-            uploadPayImg: function() { if(!user) return; const file = document.getElementById('pay_img_input').files[0]; if(!file) return; const reader = new FileReader(); reader.onloadend = async () => { await setDoc(doc(db, "admins", user.name), { payImg: reader.result }, { merge: true }); }; reader.readAsDataURL(file); },
+            
+            updatePaySettings: async () => {
+                if(!user) return;
+                const url = document.getElementById('pay_url_input').value.trim();
+                const file = document.getElementById('pay_img_input').files[0];
+                try {
+                    await setDoc(doc(db, "admins", user.name), { payUrl: url }, { merge: true });
+                    if(file) {
+                        const reader = new FileReader();
+                        reader.onloadend = async () => {
+                            await setDoc(doc(db, "admins", user.name), { payImg: reader.result }, { merge: true });
+                            vflow.showToast("付款資料更新成功！");
+                        };
+                        reader.readAsDataURL(file);
+                    } else {
+                        vflow.showToast("付款網址更新成功！");
+                    }
+                } catch(e) { vflow.showToast("更新失敗，請稍後再試", true); }
+            },
 
             createGame: async () => { 
                 const loc = document.getElementById('new_loc').value.trim(); 
                 const dateVal = document.getElementById('new_date').value; 
-                if(!loc||!dateVal) return alert("Please fill details");
+                if(!loc) { vflow.showToast("請填寫體育館名稱", true); return; }
+                if(!dateVal) { vflow.showToast("請選擇日期", true); return; }
                 const weekDay = ["日","一","二","三","四","五","六"][new Date(dateVal).getDay()];
                 const fullTime = `${dateVal} (${weekDay}) ${document.getElementById('start_time').value} - ${document.getElementById('end_time').value}`;
                 await addDoc(collection(db, "games"), { 
@@ -268,7 +231,8 @@
                     cost: parseInt(document.getElementById('new_cost').value||0), 
                     createdBy: user.name, approved: user.role === 'super', timestamp: serverTimestamp() 
                 });
-                location.reload(); 
+                vflow.showToast("活動發佈成功！");
+                setTimeout(() => location.reload(), 1500);
             },
 
             renderList: (games) => {
@@ -283,8 +247,7 @@
                             <span class="text-[8px] font-bold text-gray-300">@${g.createdBy.toUpperCase()}</span>
                         </div>
                         <h3 class="text-2xl font-extrabold tracking-tight mb-8 uppercase">${g.location}</h3>
-                        ${(user?.role==='super'||user?.name===g.createdBy) ? `
-                        <div class="flex gap-4 border-t border-gray-100 pt-6 mt-4">
+                        ${(user?.role==='super'||user?.name===g.createdBy) ? `<div class="flex gap-4 border-t border-gray-100 pt-6 mt-4">
                             ${(user?.role==='super' && !g.approved) ? `<button onclick="event.stopPropagation();vflow.approveGame('${g.id}')" class="text-[10px] font-extrabold text-emerald-500">APPROVE</button>` : ''}
                             <button onclick="event.stopPropagation();vflow.generateStory('${g.location}', '${g.time}', ${g.maxPlayers}, ${g.price}, '${g.createdBy}')" class="text-[10px] font-extrabold">STORY</button>
                             <button onclick="event.stopPropagation();vflow.delGame('${g.id}')" class="text-[10px] font-extrabold text-red-300">DELETE</button>
@@ -305,18 +268,16 @@
                                 <span class="section-title !text-indigo-600">${g.time}</span>
                                 <span id="p-count" class="text-xs font-bold">0 / ${g.maxPlayers}</span>
                             </div>
-                            <p class="mt-6 text-sm text-gray-400 font-medium leading-relaxed">${g.description || ''}</p>
                         </div>
-
                         <div class="premium-card p-8 mb-12">
                             <div class="grid grid-cols-1 gap-4 mb-8">
                                 <input id="nickname" type="text" placeholder="NICKNAME / 暱稱" class="input-flat">
-                                <input id="ig" type="text" placeholder="INSTAGRAM (@...)" class="input-flat">
+                                <input id="ig" type="text" placeholder="INSTAGRAM (必須加 @)" class="input-flat">
                             </div>
                             <div class="space-y-2 mb-8">
                                 ${['Setter (二傳)','Outside Hitter (大搥)','Middle Blocker (快攻)','Opposite (接應)','Libero (自由人)'].map(p=>`<button data-pos="${p}" onclick="vflow.setPos('${p}')" class="pos-btn btn-outline w-full py-4 text-[10px] uppercase tracking-widest">${p}</button>`).join('')}
                             </div>
-                            <button onclick="vflow.prepJoin('${id}', ${g.price}, '${g.location}', '${g.time}', ${g.maxPlayers}, '${g.createdBy}')" class="w-full btn-black py-5 uppercase text-xs">Join $${g.price}</button>
+                            <button onclick="vflow.prepJoin('${id}', ${g.price}, '${g.createdBy}')" class="w-full btn-black py-5 uppercase text-xs">Join $${g.price}</button>
                         </div>
                         <div id="player-list" class="space-y-4 pb-20"></div>
                     `;
@@ -331,10 +292,7 @@
                     if(isMgr) {
                         document.getElementById('player-list').innerHTML = players.map((p, index) => `
                             <div class="premium-card p-5 flex justify-between items-center ${index >= max ? 'bg-gray-50' : ''}">
-                                <div>
-                                    <p class="text-sm font-extrabold uppercase">${index+1}. ${p.nickname || p.ig}</p>
-                                    <p class="text-[8px] font-bold text-gray-400 mt-1 uppercase">${p.pos} | ${p.status}</p>
-                                </div>
+                                <div><p class="text-sm font-extrabold uppercase">${index+1}. ${p.nickname}</p><p class="text-[8px] font-bold text-gray-400 mt-1 uppercase">${p.pos} | ${p.status}</p></div>
                                 <div class="flex gap-4">
                                     <button onclick="vflow.confirmP('${gid}','${p.id}')" class="text-[10px] font-bold text-emerald-500">OK</button>
                                     <button onclick="vflow.delP('${gid}','${p.id}')" class="text-[10px] font-bold text-red-300">DEL</button>
@@ -372,14 +330,32 @@
                 }
             },
 
-            prepJoin: async (gid, pr, loc, time, maxLimit, createdBy) => {
-                const ig = document.getElementById('ig').value.trim();
-                const nick = document.getElementById('nickname').value.trim();
-                if(!ig.startsWith('@') || !nick || selectedPositions.length===0) return alert("Incomplete Info");
+            prepJoin: async (gid, pr, createdBy) => {
+                const igInput = document.getElementById('ig');
+                const nickInput = document.getElementById('nickname');
+                const ig = igInput.value.trim();
+                const nick = nickInput.value.trim();
+
+                // 重置錯誤樣式
+                igInput.classList.remove('input-error');
+                nickInput.classList.remove('input-error');
+
+                if(!nick) { 
+                    nickInput.classList.add('input-error');
+                    vflow.showToast("請輸入暱稱", true); return; 
+                }
+                if(!ig.startsWith('@') || ig.length < 3) { 
+                    igInput.classList.add('input-error');
+                    vflow.showToast("IG 必須以 @ 開頭並填寫正確帳號", true); return; 
+                }
+                if(selectedPositions.length === 0) { 
+                    vflow.showToast("請選擇至少一個位置", true); return; 
+                }
+
                 const adminDoc = await getDoc(doc(db, "admins", createdBy));
                 const orgData = adminDoc.data() || {};
-                document.getElementById('content-payme').innerHTML = orgData.payUrl ? `<a href="${orgData.payUrl}" target="_blank" class="btn-black w-48 mx-auto py-4 text-[10px]">OPEN PAYME</a>` : 'No URL';
-                document.getElementById('content-alipay').innerHTML = orgData.payImg ? `<img src="${orgData.payImg}" class="w-40 mx-auto rounded border">` : 'No Image';
+                document.getElementById('content-payme').innerHTML = orgData.payUrl ? `<a href="${orgData.payUrl}" target="_blank" class="btn-black w-48 mx-auto py-4 text-[10px]">OPEN PAYME</a>` : 'No URL Set';
+                document.getElementById('content-alipay').innerHTML = orgData.payImg ? `<img src="${orgData.payImg}" class="w-40 mx-auto rounded border">` : 'No QR Set';
                 document.getElementById('sheet-price').innerText = `$${pr}`;
                 tempJoinData = { gid, ig, nickname: nick, pos: selectedPositions.join(' & ') };
                 vflow.openSheet();
@@ -388,18 +364,19 @@
             executeJoin: async () => {
                 const file = document.getElementById('receipt_input').files[0];
                 const btn = document.getElementById('btn-submit-reg');
-                btn.innerText = "WAIT..."; btn.disabled = true;
+                if(!file) { vflow.showToast("請上傳入數紙截圖", true); return; }
+                btn.innerText = "UPLOADING..."; btn.disabled = true;
                 const base64Img = await vflow.compressImg(file);
                 await addDoc(collection(db, `games/${tempJoinData.gid}/players`), { 
                     ...tempJoinData, status: "pending", receipt: base64Img, timestamp: serverTimestamp() 
                 });
-                location.reload();
+                vflow.showToast("報名成功！請等待確認");
+                setTimeout(() => location.reload(), 2000);
             },
 
             generateStory: (loc, time, max, price, org) => {
                 const cvs = document.createElement('canvas'); cvs.width=1080; cvs.height=1920; const ctx = cvs.getContext('2d');
-                ctx.fillStyle = '#fff'; ctx.fillRect(0,0,1080,1920);
-                ctx.textAlign='center'; ctx.fillStyle='#000';
+                ctx.fillStyle = '#fff'; ctx.fillRect(0,0,1080,1920); ctx.textAlign='center'; ctx.fillStyle='#000';
                 ctx.font='900 100px Urbanist'; ctx.fillText('VOLLEYFLOW.', 540, 300);
                 ctx.font='600 30px Urbanist'; ctx.fillText(`ORG: @${org.toUpperCase()}`, 540, 380);
                 ctx.font='900 85px Urbanist'; ctx.fillText(loc.toUpperCase(), 540, 850);
@@ -410,12 +387,18 @@
                 document.getElementById('story_modal').classList.remove('hidden');
             },
 
-            approveGame: async (id) => await updateDoc(doc(db, "games", id), { approved: true }),
-            delGame: async (id) => { if(confirm("DEL?")) await deleteDoc(doc(db, "games", id)); },
-            confirmP: async (gid, pid) => await updateDoc(doc(db, `games/${gid}/players`, pid), { status: "confirmed" }),
-            delP: async (gid, pid) => { if(confirm("DEL?")) await deleteDoc(doc(db, `games/${gid}/players`, pid)); },
+            approveGame: async (id) => { await updateDoc(doc(db, "games", id), { approved: true }); vflow.showToast("活動已核准"); },
+            delGame: async (id) => { if(confirm("確定刪除活動？")) { await deleteDoc(doc(db, "games", id)); vflow.showToast("活動已刪除"); } },
+            confirmP: async (gid, pid) => { await updateDoc(doc(db, `games/${gid}/players`, pid), { status: "confirmed" }); vflow.showToast("球員已確認"); },
+            delP: async (gid, pid) => { if(confirm("剔除此球員？")) { await deleteDoc(doc(db, `games/${gid}/players`, pid)); vflow.showToast("球員已剔除"); } },
             viewReceipt: (b64) => { document.getElementById('receipt_display_img').src = b64; document.getElementById('receipt_modal').classList.remove('hidden'); },
-            addAdminAccount: async () => { const u=document.getElementById('new_admin_u').value.trim(); const p=document.getElementById('new_admin_p').value.trim(); if(!u||!p) return; await setDoc(doc(db, "admins", u), { username:u, password:p, role:'organizer' }); location.reload(); }
+            addAdminAccount: async () => { 
+                const u=document.getElementById('new_admin_u').value.trim(); 
+                const p=document.getElementById('new_admin_p').value.trim(); 
+                if(!u||!p) return; 
+                await setDoc(doc(db, "admins", u), { username:u, password:p, role:'organizer' }); 
+                vflow.showToast(`管理員 ${u} 已新增`);
+            }
         };
 
         if (user) { 
