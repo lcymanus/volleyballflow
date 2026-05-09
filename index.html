@@ -5,192 +5,269 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>VolleyballFlow | 專業排球平台</title>
     
-    <link rel="preconnect" href="https://www.gstatic.com" crossorigin>
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;700;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Urbanist:ital,wght@0,400;0,700;0,900;1,900&display=swap" rel="stylesheet">
     <script src="https://cdn.tailwindcss.com"></script>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <style>
+        :root {
+            --brand-primary: #4f46e5;
+            --brand-dark: #0f172a;
+            --glass-bg: rgba(255, 255, 255, 0.85);
+        }
+
         body { 
-            background: #f4f7f6; 
-            color: #0f172a; 
-            font-family: 'Urbanist', sans-serif; 
-            -webkit-tap-highlight-color: transparent; 
+            background: #f8fafc;
+            color: var(--brand-dark);
+            font-family: 'Urbanist', sans-serif;
+            -webkit-tap-highlight-color: transparent;
             min-height: 100vh;
             position: relative;
+            /* 現代動態背景 */
+            background-image: 
+                radial-gradient(at 0% 0%, rgba(79, 70, 229, 0.08) 0px, transparent 50%),
+                radial-gradient(at 100% 100%, rgba(99, 102, 241, 0.05) 0px, transparent 50%);
         }
         
-        /* 全局背景水印 */
+        /* 品牌浮雕水印 */
         body::before {
-            content: "VolleyballFlow";
+            content: "VOLLEYFLOW";
             position: fixed;
             top: 50%;
             left: 50%;
-            transform: translate(-50%, -50%) rotate(-30deg);
-            font-size: 12vw;
+            transform: translate(-50%, -50%) rotate(-25deg);
+            font-size: 15vw;
             font-weight: 900;
-            color: rgba(15, 23, 42, 0.03);
+            font-style: italic;
+            color: rgba(15, 23, 42, 0.02);
             pointer-events: none;
             z-index: 0;
-            white-space: nowrap;
+            letter-spacing: -0.05em;
         }
 
         .glass-card { 
-            background: #ffffff; 
-            border: 1px solid #e2e8f0; 
-            border-radius: 24px; 
-            box-shadow: 0 4px 20px -2px rgba(0, 0, 0, 0.05); 
+            background: var(--glass-bg);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.6);
+            border-radius: 28px;
+            box-shadow: 0 10px 30px -10px rgba(0, 0, 0, 0.04);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:active { transform: scale(0.98); }
+
+        .btn-primary {
+            background: var(--brand-dark);
+            color: white;
+            transition: all 0.2s;
             position: relative;
             overflow: hidden;
         }
+        
+        .btn-primary:active { transform: scale(0.96); opacity: 0.9; }
 
-        /* 卡片內部微水印 */
-        .glass-card::after {
-            content: "VolleyballFlow";
-            position: absolute;
-            bottom: 10px;
-            right: 10px;
-            font-size: 10px;
-            font-weight: 900;
-            color: rgba(79, 70, 229, 0.05);
-            pointer-events: none;
-            letter-spacing: 1px;
+        .pos-btn { 
+            transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+            border: 1.5px solid #e2e8f0; 
+            background: white;
+            border-radius: 18px;
+        }
+        
+        .pos-selected { 
+            background: var(--brand-dark) !important; 
+            color: white !important; 
+            border-color: var(--brand-dark) !important;
+            transform: translateY(-2px);
+            box-shadow: 0 8px 20px -5px rgba(15, 23, 42, 0.3);
         }
 
-        .modal-backdrop { background-color: rgba(15, 23, 42, 0.6); backdrop-filter: blur(4px); z-index: 3000; }
-        .bottom-sheet { position: fixed; left: 0; right: 0; bottom: 0; background: #ffffff; color: #0f172a; border-top-left-radius: 32px; border-top-right-radius: 32px; transform: translateY(100%); transition: transform 0.4s cubic-bezier(0.32, 0.72, 0, 1); z-index: 1000; padding: 32px; max-height: 90vh; overflow-y: auto; box-shadow: 0 -10px 40px rgba(0,0,0,0.1); }
+        .input-premium {
+            width: 100%;
+            background: rgba(255, 255, 255, 0.8);
+            border: 1.5px solid #e2e8f0;
+            padding: 18px;
+            border-radius: 20px;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+
+        .input-premium:focus {
+            border-color: var(--brand-primary);
+            background: white;
+            box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1);
+            outline: none;
+        }
+
+        .bottom-sheet {
+            position: fixed; left: 0; right: 0; bottom: 0;
+            background: white;
+            border-top-left-radius: 40px;
+            border-top-right-radius: 40px;
+            transform: translateY(100%);
+            transition: transform 0.5s cubic-bezier(0.32, 0.72, 0, 1);
+            z-index: 1000;
+            padding: 40px 24px;
+            box-shadow: 0 -20px 60px rgba(0,0,0,0.08);
+        }
         .bottom-sheet.open { transform: translateY(0); }
-        .sheet-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.4); opacity: 0; pointer-events: none; transition: opacity 0.3s; z-index: 999; }
-        .sheet-overlay.open { opacity: 1; pointer-events: auto; }
-        .ticket-design { border: 2px dashed #cbd5e1; border-left: none; border-right: none; padding: 20px 0; position: relative; }
-        .pos-btn { transition: all 0.2s; border: 1px solid #e2e8f0; background: #f8fafc; color: #64748b; }
-        .pos-selected { background: #4f46e5 !important; color: #ffffff !important; border-color: #4f46e5 !important; font-weight: 900; box-shadow: 0 4px 12px rgba(79, 70, 229, 0.3); }
-        .input-light { width: 100%; background: #f8fafc; border: 1px solid #e2e8f0; padding: 16px; border-radius: 16px; font-size: 14px; outline: none; color: #0f172a; transition: all 0.2s; }
-        .input-light:focus { border-color: #4f46e5; box-shadow: 0 0 0 3px rgba(79, 70, 229, 0.1); }
-        @keyframes pulse-soft { 0%, 100% { opacity: 1; } 50% { opacity: 0.6; } }
-        .animate-pulse-soft { animation: pulse-soft 2s infinite; }
-        .file-upload-wrapper { position: relative; overflow: hidden; display: inline-block; width: 100%; }
-        .file-upload-wrapper input[type=file] { font-size: 100px; position: absolute; left: 0; top: 0; opacity: 0; cursor: pointer; height: 100%; }
+
+        /* 隱藏原生滾動條但保持滾動 */
+        .no-scrollbar::-webkit-scrollbar { display: none; }
+        .no-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
     </style>
 </head>
-<body class="p-5 pb-24">
+<body class="p-6 pb-24 no-scrollbar">
 
-    <div id="app-root" class="max-w-md mx-auto">
-        <header class="mb-10 text-center relative z-10 pt-4">
-            <h1 onclick="vflow.clickSecret()" class="text-4xl font-black italic tracking-tighter text-slate-900 leading-none cursor-pointer select-none">VOLLEYFLOW<span class="text-indigo-600">.</span></h1>
-            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-[0.4em] mt-3">Professional Ecosystem</p>
-            <div id="admin-status" class="mt-6"></div>
+    <div id="app-root" class="max-w-md mx-auto relative z-10">
+        <header class="mb-12 text-center pt-6">
+            <h1 onclick="vflow.clickSecret()" class="text-5xl font-black italic tracking-[ -0.06em] text-slate-900 leading-none cursor-pointer select-none">
+                VOLLEY<span class="text-indigo-600">FLOW</span>
+            </h1>
+            <div class="flex items-center justify-center gap-2 mt-4">
+                <span class="h-[1px] w-4 bg-slate-300"></span>
+                <p class="text-[10px] font-black text-slate-400 uppercase tracking-[0.3em]">Pro Ecosystem</p>
+                <span class="h-[1px] w-4 bg-slate-300"></span>
+            </div>
+            <div id="admin-status" class="mt-8"></div>
         </header>
 
-        <div id="admin-panel" class="hidden space-y-6 mb-12">
-            <div id="super-admin-tools" class="hidden glass-card p-6 border-red-200 bg-red-50">
-                <h3 class="text-xs font-black uppercase text-red-600 tracking-widest mb-4">👑 Super Admin Tools</h3>
+        <div id="admin-panel" class="hidden space-y-8 mb-12">
+            <div id="super-admin-tools" class="hidden glass-card p-6 border-red-100 bg-red-50/30">
+                <h3 class="text-[10px] font-black uppercase text-red-500 tracking-widest mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-crown"></i> Super Admin Tools
+                </h3>
                 <div class="flex gap-2 mb-4">
-                    <input id="new_admin_u" type="text" placeholder="New Username" class="flex-1 bg-white border border-red-200 p-3 rounded-xl text-xs outline-none focus:border-red-400">
-                    <input id="new_admin_p" type="text" placeholder="Password" class="flex-1 bg-white border border-red-200 p-3 rounded-xl text-xs outline-none focus:border-red-400">
-                    <button onclick="vflow.addAdminAccount()" class="bg-red-500 text-white px-4 rounded-xl text-[10px] font-black shadow-md">Add</button>
+                    <input id="new_admin_u" type="text" placeholder="Username" class="flex-1 bg-white border border-red-100 p-3 rounded-xl text-xs outline-none">
+                    <input id="new_admin_p" type="text" placeholder="Password" class="flex-1 bg-white border border-red-100 p-3 rounded-xl text-xs outline-none">
+                    <button onclick="vflow.addAdminAccount()" class="bg-red-500 text-white px-4 rounded-xl text-[10px] font-black uppercase">Add</button>
                 </div>
-                <div id="admin-list-container" class="space-y-2 mt-4 border-t border-red-200 pt-4"></div>
+                <div id="admin-list-container" class="space-y-2 mt-4 border-t border-red-100 pt-4"></div>
             </div>
 
             <div class="glass-card p-6">
-                <h3 class="text-[11px] font-black uppercase text-slate-500 tracking-widest mb-4">收款設定 Payment Methods</h3>
+                <h3 class="text-[10px] font-black uppercase text-slate-400 tracking-widest mb-5">Payment Configuration</h3>
                 <div class="space-y-4">
-                    <div class="bg-indigo-50/50 p-4 rounded-xl border border-indigo-100">
-                        <label class="text-[10px] font-bold text-indigo-600 uppercase mb-2 block"><i class="fa-solid fa-link"></i> PayMe 連結</label>
+                    <div class="bg-white p-4 rounded-2xl border border-slate-100">
+                        <label class="text-[9px] font-black text-indigo-500 uppercase mb-2 block">PayMe Link</label>
                         <div class="flex gap-2">
-                            <input id="pay_url_input" type="text" placeholder="貼上 PayMe / FPS 連結..." class="input-light flex-1 !p-3 !bg-white">
-                            <button onclick="vflow.updatePayUrl()" class="bg-indigo-600 text-white px-4 rounded-xl text-[10px] font-black uppercase shadow-md active:scale-95">儲存</button>
+                            <input id="pay_url_input" type="text" placeholder="https://..." class="flex-1 text-xs outline-none">
+                            <button onclick="vflow.updatePayUrl()" class="text-indigo-600 font-black text-[10px] uppercase">Save</button>
                         </div>
                     </div>
-                    <div class="bg-sky-50/50 p-4 rounded-xl border border-sky-100">
-                        <label class="text-[10px] font-bold text-[#00A0E9] uppercase mb-2 block"><i class="fa-solid fa-qrcode"></i> Alipay QR Code 圖</label>
+                    <div class="bg-white p-4 rounded-2xl border border-slate-100">
+                        <label class="text-[9px] font-black text-sky-500 uppercase mb-2 block">Alipay QR Code</label>
                         <div class="flex gap-2 items-center">
-                            <input id="pay_img_input" type="file" accept="image/*" class="w-full bg-white border border-slate-200 p-2 rounded-xl text-[10px] text-slate-600">
-                            <button onclick="vflow.uploadPayImg()" class="bg-[#00A0E9] text-white px-4 py-3 rounded-xl text-[10px] font-black uppercase shadow-md active:scale-95 whitespace-nowrap">上傳</button>
+                            <input id="pay_img_input" type="file" accept="image/*" class="flex-1 text-[10px] text-slate-400">
+                            <button onclick="vflow.uploadPayImg()" class="bg-sky-500 text-white px-4 py-2 rounded-lg text-[9px] font-black uppercase">Upload</button>
                         </div>
                     </div>
                 </div>
             </div>
 
-            <div class="glass-card p-8 bg-gradient-to-br from-white to-slate-50">
-                <h3 class="text-sm font-black uppercase text-slate-800 tracking-tighter mb-6" id="create-title">Create New Game 🏐</h3>
+            <div class="glass-card p-8">
+                <h3 class="text-lg font-black italic text-slate-800 mb-6 uppercase tracking-tight" id="create-title">New Game Session 🏐</h3>
                 <div class="space-y-4">
-                    <input id="new_loc" type="text" placeholder="體育館名稱" class="input-light">
-                    <input id="new_date" type="date" class="input-light text-slate-600">
+                    <input id="new_loc" type="text" placeholder="Venue Name (e.g. 港島東)" class="input-premium">
                     <div class="grid grid-cols-2 gap-3">
-                        <div class="space-y-1">
-                            <label class="text-[9px] font-bold text-slate-400 uppercase ml-2">開始時間</label>
-                            <input id="start_time" type="time" value="19:00" class="input-light !p-3">
-                        </div>
-                        <div class="space-y-1">
-                            <label class="text-[9px] font-bold text-slate-400 uppercase ml-2">完場時間</label>
-                            <input id="end_time" type="time" value="21:00" class="input-light !p-3">
+                        <input id="new_date" type="date" class="input-premium !py-4 text-xs">
+                        <div class="flex gap-1">
+                            <input id="start_time" type="time" value="19:00" class="input-premium !p-3 text-xs">
+                            <input id="end_time" type="time" value="21:00" class="input-premium !p-3 text-xs">
                         </div>
                     </div>
-                    <textarea id="new_desc" placeholder="場地描述 (例如: 1號場, 唔好飛機...)" class="input-light h-20"></textarea>
+                    <textarea id="new_desc" placeholder="Notes... (e.g. Court 1)" class="input-premium h-24 resize-none"></textarea>
                     <div class="grid grid-cols-3 gap-3">
-                        <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm"><label class="text-[9px] font-bold text-slate-400 uppercase block">名額</label><input id="new_max" type="number" value="15" class="bg-transparent text-slate-800 w-full outline-none font-black text-lg"></div>
-                        <div class="bg-white p-3 rounded-2xl border border-slate-200 shadow-sm"><label class="text-[9px] font-bold text-slate-400 uppercase block">收費</label><input id="new_price" type="number" value="30" class="bg-transparent text-slate-800 w-full outline-none font-black text-lg"></div>
-                        <div class="bg-red-50 p-3 rounded-2xl border border-red-100 shadow-sm"><label class="text-[9px] font-bold text-red-500 uppercase block">場租</label><input id="new_cost" type="number" value="0" class="bg-transparent text-red-600 w-full outline-none font-black text-lg"></div>
+                        <div class="bg-slate-50 p-4 rounded-2xl"><label class="text-[8px] font-black text-slate-400 uppercase">Limit</label><input id="new_max" type="number" value="15" class="bg-transparent font-black w-full outline-none"></div>
+                        <div class="bg-slate-50 p-4 rounded-2xl"><label class="text-[8px] font-black text-slate-400 uppercase">Fee</label><input id="new_price" type="number" value="30" class="bg-transparent font-black w-full outline-none"></div>
+                        <div class="bg-red-50/50 p-4 rounded-2xl"><label class="text-[8px] font-black text-red-400 uppercase">Cost</label><input id="new_cost" type="number" value="0" class="bg-transparent font-black text-red-600 w-full outline-none"></div>
                     </div>
-                    <button onclick="vflow.createGame()" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl shadow-lg active:scale-95 transition-all uppercase tracking-widest text-xs mt-2">發布場次</button>
+                    <button onclick="vflow.createGame()" class="w-full btn-primary font-black py-5 rounded-2xl shadow-xl shadow-indigo-100 uppercase tracking-widest text-xs">Publish Session</button>
                 </div>
             </div>
         </div>
 
-        <div id="main-content" class="relative z-10 space-y-5"></div>
+        <div id="main-content" class="relative z-10 space-y-6"></div>
         
-        <div id="story_modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center p-6 z-[2000]"><div class="bg-white w-full max-w-sm p-6 rounded-[32px] shadow-2xl border border-slate-100"><h3 class="text-slate-800 text-center font-black uppercase mb-4 tracking-widest">Post Ready! 📸</h3><img id="story_preview" src="" class="w-full rounded-2xl mb-6 shadow-md border border-slate-100"><a id="story_download_btn" href="#" download="story.png" class="block w-full bg-indigo-600 text-white text-center font-black py-4 rounded-2xl shadow-lg uppercase tracking-widest text-xs mb-2">下載宣傳圖</a><button onclick="document.getElementById('story_modal').classList.add('hidden')" class="w-full text-slate-400 font-bold py-2 text-[10px] uppercase hover:text-slate-600 transition-colors">取消</button></div></div>
-        <div id="login_modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center p-6 z-[3000]"><div class="glass-card w-full max-w-xs p-8 text-center bg-white"><h3 class="font-black italic text-slate-800 mb-6 uppercase text-xl">VolleyballFlow Login</h3><input id="login_u" type="text" placeholder="Username" class="input-light mb-3"><input id="login_p" type="password" placeholder="Password" class="input-light mb-6"><div class="flex gap-3"><button onclick="vflow.closeLogin()" class="flex-1 bg-slate-100 text-slate-600 font-black py-3.5 rounded-xl uppercase text-xs hover:bg-slate-200 transition-colors">Cancel</button><button onclick="vflow.login()" class="flex-1 bg-indigo-600 text-white font-black py-3.5 rounded-xl uppercase text-xs shadow-md shadow-indigo-200">Login</button></div></div></div>
+        <div id="story_modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center p-6 z-[2000]">
+            <div class="bg-white w-full max-w-sm p-8 rounded-[40px] shadow-2xl">
+                <h3 class="text-slate-800 text-center font-black italic text-xl mb-6">READY TO POST</h3>
+                <img id="story_preview" src="" class="w-full rounded-3xl mb-6 shadow-xl border border-slate-50">
+                <a id="story_download_btn" href="#" download="story.png" class="block w-full btn-primary text-center font-black py-5 rounded-2xl shadow-lg uppercase text-xs mb-3">Download Image</a>
+                <button onclick="document.getElementById('story_modal').classList.add('hidden')" class="w-full text-slate-400 font-bold text-[10px] uppercase">Close</button>
+            </div>
+        </div>
+
+        <div id="login_modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center p-6 z-[3000]">
+            <div class="glass-card w-full max-w-xs p-10 text-center">
+                <h3 class="font-black italic text-slate-800 mb-8 uppercase text-2xl tracking-tighter">Organizer</h3>
+                <input id="login_u" type="text" placeholder="Username" class="input-premium mb-3">
+                <input id="login_p" type="password" placeholder="Password" class="input-premium mb-8">
+                <div class="flex flex-col gap-3">
+                    <button onclick="vflow.login()" class="w-full btn-primary font-black py-4 rounded-2xl uppercase text-xs">Access Portal</button>
+                    <button onclick="vflow.closeLogin()" class="w-full text-slate-400 font-bold text-[10px] uppercase py-2">Back</button>
+                </div>
+            </div>
+        </div>
+
         <div id="receipt_modal" class="hidden fixed inset-0 modal-backdrop flex items-center justify-center p-4 z-[4000]" onclick="this.classList.add('hidden')">
-            <div class="relative max-w-full max-h-full p-2">
-                <span class="absolute -top-10 right-0 text-white font-black uppercase text-xs bg-black/50 px-3 py-1 rounded-full"><i class="fa-solid fa-xmark mr-1"></i> Close</span>
-                <img id="receipt_display_img" src="" class="max-w-full max-h-[80vh] rounded-2xl shadow-2xl object-contain bg-slate-900 border-4 border-white">
+            <div class="relative max-w-full max-h-full">
+                <img id="receipt_display_img" src="" class="max-w-full max-h-[85vh] rounded-3xl shadow-2xl border-4 border-white">
             </div>
         </div>
     </div>
 
     <div id="sheet-overlay" class="sheet-overlay" onclick="vflow.closeSheet()"></div>
     <div id="bottom-sheet" class="bottom-sheet flex flex-col">
-        <div class="w-12 h-1.5 bg-slate-200 rounded-full mx-auto mb-6 shrink-0"></div>
-        <div class="text-center mb-6 shrink-0">
-            <h3 class="text-2xl font-black italic uppercase tracking-tighter text-slate-900" id="sheet-title">付款及確認</h3>
-            <p class="text-[10px] font-bold text-slate-500 uppercase tracking-widest mt-1">Payment & Upload Receipt</p>
+        <div class="w-16 h-1.5 bg-slate-100 rounded-full mx-auto mb-10 shrink-0"></div>
+        <div class="text-center mb-8">
+            <h3 class="text-3xl font-black italic uppercase tracking-tighter text-slate-900">Checkout</h3>
+            <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mt-2">Secure Registration</p>
         </div>
-        <div class="ticket-design mb-6 shrink-0">
-            <div class="flex justify-between items-end">
+        
+        <div class="bg-slate-50 rounded-[32px] p-8 mb-8 relative overflow-hidden">
+            <div class="relative z-10 flex justify-between items-end">
                 <div>
-                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">總計費用</p>
-                    <p class="text-3xl font-black text-slate-900" id="sheet-price">$0</p>
+                    <p class="text-[10px] font-black text-slate-400 uppercase mb-1">Total Fee</p>
+                    <p class="text-4xl font-black text-slate-900" id="sheet-price">$0</p>
                 </div>
                 <div class="text-right">
-                    <p class="text-[10px] font-black text-indigo-600 uppercase bg-indigo-50 px-2 py-1 rounded mb-1" id="sheet-org-name">Org</p>
-                    <p class="text-[10px] font-black text-slate-600 bg-slate-100 px-3 py-1 rounded-full border border-slate-200" id="sheet-ig-tag">@ig</p>
+                    <p id="sheet-org-name" class="text-[10px] font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full inline-block">Org</p>
+                    <p id="sheet-ig-tag" class="text-sm font-bold text-slate-800 mt-2 block">@ig</p>
                 </div>
             </div>
+            <div class="absolute top-0 right-0 -mr-10 -mt-10 w-40 h-40 bg-indigo-500/5 rounded-full"></div>
         </div>
-        <div id="payment-upload-area" class="space-y-5 flex-1 overflow-y-auto pb-4">
-            <div class="flex gap-2 bg-slate-100 p-1 rounded-2xl">
-                <button id="tab-payme" onclick="vflow.switchPayTab('payme')" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all bg-white text-indigo-600 shadow-sm"><i class="fa-solid fa-link mr-1"></i> PayMe</button>
-                <button id="tab-alipay" onclick="vflow.switchPayTab('alipay')" class="flex-1 py-3 rounded-xl text-[10px] font-black uppercase transition-all text-slate-500 hover:bg-slate-200/50"><i class="fa-solid fa-qrcode mr-1"></i> Alipay</button>
+
+        <div id="payment-upload-area" class="space-y-6 flex-1 overflow-y-auto no-scrollbar">
+            <div class="flex gap-2 bg-slate-100 p-1.5 rounded-2xl">
+                <button id="tab-payme" onclick="vflow.switchPayTab('payme')" class="flex-1 py-4 rounded-xl text-[10px] font-black uppercase transition-all bg-white text-indigo-600 shadow-sm">PayMe</button>
+                <button id="tab-alipay" onclick="vflow.switchPayTab('alipay')" class="flex-1 py-4 rounded-xl text-[10px] font-black uppercase transition-all text-slate-500">Alipay</button>
             </div>
-            <div id="content-payme" class="text-center bg-indigo-50/50 p-5 rounded-2xl border border-indigo-100"></div>
-            <div id="content-alipay" class="hidden text-center bg-sky-50/50 p-5 rounded-2xl border border-sky-100"></div>
-            <div class="mt-4 border-t border-slate-100 pt-5">
-                <label class="text-[11px] font-black text-slate-800 uppercase block mb-3 text-center">📸 上傳付款截圖以完成報名</label>
-                <div class="file-upload-wrapper bg-slate-50 border-2 border-dashed border-slate-300 rounded-2xl p-6 text-center hover:bg-slate-100 transition-colors">
+            
+            <div id="content-payme" class="animate-in fade-in duration-300"></div>
+            <div id="content-alipay" class="hidden animate-in fade-in duration-300"></div>
+
+            <div class="pt-6">
+                <p class="text-[10px] font-black text-slate-400 uppercase text-center mb-4 tracking-widest">Screenshot Required</p>
+                <div class="file-upload-wrapper border-2 border-dashed border-slate-200 rounded-[24px] p-10 text-center hover:bg-slate-50 transition-all">
                     <input type="file" id="receipt_input" accept="image/*" onchange="vflow.previewReceipt(this)">
-                    <div id="receipt_placeholder"><i class="fa-solid fa-cloud-arrow-up text-3xl text-slate-400 mb-2"></i><p class="text-xs font-bold text-slate-500">點擊選擇圖片</p></div>
-                    <img id="receipt_thumbnail" src="" class="hidden w-full h-32 object-cover rounded-xl mt-2 border border-slate-200">
+                    <div id="receipt_placeholder">
+                        <div class="w-12 h-12 bg-slate-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                            <i class="fa-solid fa-camera text-slate-400"></i>
+                        </div>
+                        <p class="text-xs font-black text-slate-500 uppercase tracking-tight">Tap to Upload Receipt</p>
+                    </div>
+                    <img id="receipt_thumbnail" src="" class="hidden w-full h-40 object-cover rounded-2xl mt-2 shadow-lg">
                 </div>
             </div>
         </div>
-        <div class="shrink-0 mt-2 pt-4 bg-white">
-            <button id="btn-submit-reg" onclick="vflow.executeJoin()" class="w-full bg-slate-900 text-white font-black py-4 rounded-2xl shadow-lg uppercase tracking-widest text-xs opacity-50 cursor-not-allowed" disabled>確認上傳並報名</button>
-            <button onclick="vflow.closeSheet()" class="w-full mt-4 text-slate-400 font-bold text-[10px] uppercase tracking-widest hover:text-slate-600">取消 Cancel</button>
+
+        <div class="mt-8">
+            <button id="btn-submit-reg" onclick="vflow.executeJoin()" class="w-full btn-primary font-black py-5 rounded-2xl shadow-2xl uppercase tracking-widest text-xs opacity-50 cursor-not-allowed" disabled>Confirm & Register</button>
+            <button onclick="vflow.closeSheet()" class="w-full mt-4 text-slate-300 font-bold text-[10px] uppercase">Cancel</button>
         </div>
     </div>
 
@@ -212,11 +289,17 @@
             compressImg: (file) => new Promise(resolve => { const r = new FileReader(); r.onload = e => { const img = new Image(); img.onload = () => { const cvs = document.createElement('canvas'); const max = 800; const scale = img.width > max ? max / img.width : 1; cvs.width = img.width * scale; cvs.height = img.height * scale; const ctx = cvs.getContext('2d'); ctx.drawImage(img, 0, 0, cvs.width, cvs.height); resolve(cvs.toDataURL('image/jpeg', 0.6)); }; img.src = e.target.result; }; r.readAsDataURL(file); }),
             clickSecret: () => { secretClicks++; if(secretClicks===4){ document.getElementById('login_modal').classList.remove('hidden'); secretClicks=0; } setTimeout(()=>secretClicks=0, 3000); },
             closeLogin: () => { document.getElementById('login_modal').classList.add('hidden'); },
-            login: async () => { const u = document.getElementById('login_u').value.trim(); const p = document.getElementById('login_p').value.trim(); if(u==="Manusyip" && p==="Manusyip0830") { sessionStorage.setItem('vf_user', JSON.stringify({name:u, role:'super'})); location.reload(); return; } const snap = await getDocs(query(collection(db, "admins"), where("username", "==", u), where("password", "==", p))); if(!snap.empty) { sessionStorage.setItem('vf_user', JSON.stringify({name:u, role:'normal'})); location.reload(); } else alert("帳號或密碼錯誤"); },
+            login: async () => {
+                const u = document.getElementById('login_u').value.trim();
+                const p = document.getElementById('login_p').value.trim();
+                if(u==="Manusyip" && p==="Manusyip0830") { sessionStorage.setItem('vf_user', JSON.stringify({name:u, role:'super'})); location.reload(); return; }
+                const snap = await getDocs(query(collection(db, "admins"), where("username", "==", u), where("password", "==", p)));
+                if(!snap.empty) { sessionStorage.setItem('vf_user', JSON.stringify({name:u, role:'normal'})); location.reload(); } else alert("Access Denied");
+            },
             openSheet: () => { document.getElementById('bottom-sheet').classList.add('open'); document.getElementById('sheet-overlay').classList.add('open'); },
             closeSheet: () => { document.getElementById('bottom-sheet').classList.remove('open'); document.getElementById('sheet-overlay').classList.remove('open'); },
-            updatePayUrl: async () => { await setDoc(doc(db, "admins", user.name), { payUrl: document.getElementById('pay_url_input').value }, { merge: true }); alert("已儲存!"); },
-            uploadPayImg: function() { const file = document.getElementById('pay_img_input').files[0]; if(!file) return; const reader = new FileReader(); reader.onloadend = async () => { await setDoc(doc(db, "admins", user.name), { payImg: reader.result }, { merge: true }); alert("已上傳!"); }; reader.readAsDataURL(file); },
+            updatePayUrl: async () => { await setDoc(doc(db, "admins", user.name), { payUrl: document.getElementById('pay_url_input').value }, { merge: true }); alert("Updated!"); },
+            uploadPayImg: function() { const file = document.getElementById('pay_img_input').files[0]; if(!file) return; const reader = new FileReader(); reader.onloadend = async () => { await setDoc(doc(db, "admins", user.name), { payImg: reader.result }, { merge: true }); alert("Uploaded!"); }; reader.readAsDataURL(file); },
 
             createGame: async () => { 
                 const isSuper = user?.role === 'super';
@@ -224,7 +307,7 @@
                 const dateVal = document.getElementById('new_date').value; 
                 const sT = document.getElementById('start_time').value;
                 const eT = document.getElementById('end_time').value;
-                if(!loc||!dateVal) return alert("資料唔齊！");
+                if(!loc||!dateVal) return alert("Missing Info");
                 const weekDay = ["日","一","二","三","四","五","六"][new Date(dateVal).getDay()];
                 const fullLoc = loc.includes("體育館") ? loc : `${loc}體育館`;
                 const fullTime = `${dateVal} (${weekDay}) ${sT} - ${eT}`;
@@ -236,33 +319,56 @@
                     createdBy: user.name, approved: isSuper, timestamp: serverTimestamp() 
                 });
                 if(isSuper) vflow.sendTG(`🆕 新場次發佈！\n📍 ${fullLoc}\n⏰ ${fullTime}`);
-                alert(isSuper ? "成功發佈！" : "已提交審核。"); location.reload(); 
+                alert(isSuper ? "Published!" : "Pending Review."); location.reload(); 
             },
 
-            approveGame: async (id, loc) => { await updateDoc(doc(db, "games", id), { approved: true }); vflow.sendTG(`✅ 【場次已批准】\n📍 ${loc}`); alert("已上架！"); },
-            delGame: async (id) => { if(confirm("確定刪除？")) { await deleteDoc(doc(db, "games", id)); } },
-            setPos: (p) => { const idx = selectedPositions.indexOf(p); if(idx>-1) selectedPositions.splice(idx,1); else { if(selectedPositions.length>=2) return; selectedPositions.push(p); } document.querySelectorAll('.pos-btn').forEach(btn => { btn.classList.toggle('pos-selected', selectedPositions.includes(btn.getAttribute('data-pos'))); }); },
+            approveGame: async (id, loc) => { await updateDoc(doc(db, "games", id), { approved: true }); vflow.sendTG(`✅ 【場次已批准】\n📍 ${loc}`); alert("Approved!"); },
+            delGame: async (id) => { if(confirm("Delete Game?")) { await deleteDoc(doc(db, "games", id)); } },
+            setPos: (p) => { 
+                const idx = selectedPositions.indexOf(p); 
+                if(idx>-1) selectedPositions.splice(idx,1); 
+                else { if(selectedPositions.length>=2) return; selectedPositions.push(p); } 
+                document.querySelectorAll('.pos-btn').forEach(btn => { 
+                    btn.classList.toggle('pos-selected', selectedPositions.includes(btn.getAttribute('data-pos'))); 
+                }); 
+            },
 
             prepJoin: async (gid, pr, loc, time, maxLimit, createdBy) => {
                 const ig = document.getElementById('ig').value.trim();
                 const nickname = document.getElementById('nickname').value.trim();
-                if(!ig.startsWith('@')) return alert("IG 要 @ 開頭"); 
-                if(!nickname) return alert("請輸入暱稱");
-                if(selectedPositions.length===0) return alert("揀位置先"); 
+                if(!ig.startsWith('@')) return alert("IG must start with @"); 
+                if(!nickname) return alert("Please enter nickname");
+                if(selectedPositions.length===0) return alert("Select position"); 
                 const adminDoc = await getDoc(doc(db, "admins", createdBy)); const orgData = adminDoc.data() || {};
-                document.getElementById('content-payme').innerHTML = orgData.payUrl ? `<a href="${orgData.payUrl}" target="_blank" class="w-full bg-[#E51B5C] text-white font-black py-4 rounded-xl flex justify-center items-center gap-2">PayMe 一鍵付款</a>` : `未提供`;
-                document.getElementById('content-alipay').innerHTML = orgData.payImg ? `<img src="${orgData.payImg}" class="w-48 mx-auto rounded-xl">` : `未提供`;
+                document.getElementById('content-payme').innerHTML = orgData.payUrl ? `<a href="${orgData.payUrl}" target="_blank" class="w-full bg-[#E51B5C] text-white font-black py-5 rounded-2xl flex justify-center items-center gap-2 shadow-lg shadow-pink-100">PayMe One-Click</a>` : `No Link Provided`;
+                document.getElementById('content-alipay').innerHTML = orgData.payImg ? `<img src="${orgData.payImg}" class="w-48 mx-auto rounded-3xl shadow-lg border border-slate-50">` : `No QR Provided`;
                 document.getElementById('sheet-price').innerText = `$${pr}`; document.getElementById('sheet-org-name').innerText = `@${createdBy}`; document.getElementById('sheet-ig-tag').innerText = ig;
                 tempJoinData = { gid, pr, loc, time, maxLimit, createdBy, ig, nickname, pos: selectedPositions.join(' & ') };
                 vflow.openSheet();
             },
 
-            switchPayTab: (tab) => { const isP = tab === 'payme'; document.getElementById('content-payme').classList.toggle('hidden', !isP); document.getElementById('content-alipay').classList.toggle('hidden', isP); },
-            previewReceipt: (input) => { if(input.files && input.files[0]) { document.getElementById('receipt_placeholder').classList.add('hidden'); const thumb = document.getElementById('receipt_thumbnail'); thumb.src = URL.createObjectURL(input.files[0]); thumb.classList.remove('hidden'); document.getElementById('btn-submit-reg').disabled = false; document.getElementById('btn-submit-reg').classList.remove('opacity-50','cursor-not-allowed'); } },
+            switchPayTab: (tab) => { 
+                const isP = tab === 'payme'; 
+                document.getElementById('content-payme').classList.toggle('hidden', !isP); 
+                document.getElementById('content-alipay').classList.toggle('hidden', isP);
+                document.getElementById('tab-payme').className = isP ? 'flex-1 py-4 rounded-xl text-[10px] font-black uppercase bg-white text-indigo-600 shadow-sm' : 'flex-1 py-4 rounded-xl text-[10px] font-black uppercase text-slate-400';
+                document.getElementById('tab-alipay').className = !isP ? 'flex-1 py-4 rounded-xl text-[10px] font-black uppercase bg-white text-sky-600 shadow-sm' : 'flex-1 py-4 rounded-xl text-[10px] font-black uppercase text-slate-400';
+            },
+
+            previewReceipt: (input) => { 
+                if(input.files && input.files[0]) { 
+                    document.getElementById('receipt_placeholder').classList.add('hidden'); 
+                    const thumb = document.getElementById('receipt_thumbnail'); 
+                    thumb.src = URL.createObjectURL(input.files[0]); 
+                    thumb.classList.remove('hidden'); 
+                    document.getElementById('btn-submit-reg').disabled = false; 
+                    document.getElementById('btn-submit-reg').classList.remove('opacity-50','cursor-not-allowed'); 
+                } 
+            },
 
             executeJoin: async () => {
                 if(!tempJoinData) return; const file = document.getElementById('receipt_input').files[0]; if(!file) return;
-                const btn = document.getElementById('btn-submit-reg'); btn.innerText = "上傳中..."; btn.disabled = true;
+                const btn = document.getElementById('btn-submit-reg'); btn.innerText = "Uploading..."; btn.disabled = true;
                 try {
                     const base64Img = await vflow.compressImg(file);
                     await addDoc(collection(db, `games/${tempJoinData.gid}/players`), { 
@@ -271,59 +377,103 @@
                         pos: tempJoinData.pos, status: "pending", receipt: base64Img, timestamp: serverTimestamp() 
                     });
                     vflow.sendTG(`📩 【有人報名】\n📍 ${tempJoinData.loc}\n👤 ${tempJoinData.nickname} (${tempJoinData.ig})`);
-                    alert("報名成功！等核實。"); vflow.closeSheet(); location.reload();
-                } catch(e) { alert("出錯，再試"); btn.disabled = false; }
+                    alert("Success! Waiting for verification."); vflow.closeSheet(); location.reload();
+                } catch(e) { alert("Error, try again"); btn.disabled = false; }
             },
 
             viewReceipt: (b64) => { document.getElementById('receipt_display_img').src = b64; document.getElementById('receipt_modal').classList.remove('hidden'); },
 
             renderList: (games) => {
                 const container = document.getElementById('main-content');
-                if(games.length===0) { container.innerHTML = `<p class="text-center text-slate-400 py-20">暫無場次</p>`; return; }
+                if(games.length===0) { container.innerHTML = `<p class="text-center text-slate-400 py-20 font-bold uppercase tracking-widest text-[10px]">No Sessions Available</p>`; return; }
                 container.innerHTML = games.map(g => {
                     if(!g.approved && user?.role !== 'super' && user?.name !== g.createdBy) return '';
                     return `
-                    <div onclick="vflow.goToGame('${g.id}')" class="glass-card p-6 relative overflow-hidden ${!g.approved ? 'bg-amber-50 border-amber-200' : ''}">
-                        <div class="flex justify-between items-start mb-3">
-                            <p class="text-[11px] font-black text-indigo-600 uppercase tracking-wide">${g.time}</p>
-                            <span class="text-[9px] font-black text-slate-500 uppercase bg-slate-100 px-2.5 py-1 rounded-md">Org: ${g.createdBy}</span>
+                    <div onclick="vflow.goToGame('${g.id}')" class="glass-card p-8 relative ${!g.approved ? 'opacity-70 grayscale' : ''}">
+                        <div class="flex justify-between items-start mb-6">
+                            <span class="text-[9px] font-black text-indigo-600 bg-indigo-50 px-3 py-1.5 rounded-full uppercase">${g.time}</span>
+                            <span class="text-[9px] font-black text-slate-400 uppercase tracking-tighter">Org: ${g.createdBy}</span>
                         </div>
-                        <h3 class="text-2xl font-black italic text-slate-800">${g.location} ${!g.approved ? '<span class="text-amber-600 text-xs">[待批]</span>' : ''}</h3>
+                        <h3 class="text-2xl font-black italic text-slate-900 tracking-tighter mb-2">${g.location}</h3>
+                        <p class="text-[10px] font-bold text-slate-400 uppercase tracking-widest mb-6">${g.description ? g.description.substring(0,30)+'...' : 'PRO SESSION'}</p>
+                        
                         ${(user?.role==='super'||user?.name===g.createdBy) ? `
-                        <div class="mt-5 flex gap-2 border-t border-slate-100 pt-4">
-                            ${(user?.role==='super' && !g.approved) ? `<button onclick="event.stopPropagation();vflow.approveGame('${g.id}','${g.location}')" class="flex-1 bg-amber-500 text-white text-[10px] font-black py-2.5 rounded-lg uppercase">Approve</button>` : ''}
-                            <button onclick="event.stopPropagation();vflow.generateStory('${g.location}', '${g.time}', ${g.maxPlayers}, ${g.price}, '${g.createdBy}')" class="flex-1 bg-indigo-50 text-indigo-600 text-[10px] font-black py-2.5 rounded-lg uppercase">Story</button>
-                            <button onclick="event.stopPropagation();vflow.delGame('${g.id}')" class="flex-1 bg-red-50 text-red-500 text-[10px] font-black py-2.5 rounded-lg uppercase">Delete</button>
-                        </div>` : ''}
+                        <div class="flex gap-2 border-t border-slate-50 pt-6">
+                            ${(user?.role==='super' && !g.approved) ? `<button onclick="event.stopPropagation();vflow.approveGame('${g.id}','${g.location}')" class="flex-1 bg-emerald-500 text-white text-[9px] font-black py-3 rounded-xl uppercase">Approve</button>` : ''}
+                            <button onclick="event.stopPropagation();vflow.generateStory('${g.location}', '${g.time}', ${g.maxPlayers}, ${g.price}, '${g.createdBy}')" class="flex-1 bg-slate-900 text-white text-[9px] font-black py-3 rounded-xl uppercase">Story</button>
+                            <button onclick="event.stopPropagation();vflow.delGame('${g.id}')" class="flex-1 bg-slate-100 text-slate-400 text-[9px] font-black py-3 rounded-xl uppercase">Delete</button>
+                        </div>` : `
+                        <div class="flex justify-end">
+                            <div class="w-10 h-10 rounded-full bg-slate-900 flex items-center justify-center text-white">
+                                <i class="fa-solid fa-arrow-right-long"></i>
+                            </div>
+                        </div>
+                        `}
                     </div>`;
                 }).join('');
             },
 
-            generateStory: (loc, time, max, price, orgName) => { const cvs = document.createElement('canvas'); cvs.width=1080; cvs.height=1920; const ctx = cvs.getContext('2d'); ctx.fillStyle = '#ffffff'; ctx.fillRect(0,0,1080,1920); ctx.textAlign='center'; ctx.fillStyle='#0f172a'; ctx.font='italic 900 110px sans-serif'; ctx.fillText('VOLLEYFLOW.',540,300); ctx.fillStyle='#4f46e5'; ctx.font='700 45px sans-serif'; ctx.fillText(`Organizer: @${orgName}`,540,390); ctx.fillStyle='#0f172a'; ctx.font='900 85px sans-serif'; ctx.fillText(loc,540,780); ctx.font='600 55px sans-serif'; ctx.fillText(time,540,930); ctx.fillStyle='#4f46e5'; ctx.font='900 75px sans-serif'; ctx.fillText(`$${price} | Max: ${max}`,540,1150); document.getElementById('story_preview').src = cvs.toDataURL("image/png"); document.getElementById('story_download_btn').href = cvs.toDataURL("image/png"); document.getElementById('story_modal').classList.remove('hidden'); },
+            generateStory: (loc, time, max, price, orgName) => {
+                const cvs = document.createElement('canvas'); cvs.width=1080; cvs.height=1920; const ctx = cvs.getContext('2d');
+                ctx.fillStyle = '#0f172a'; ctx.fillRect(0,0,1080,1920); 
+                ctx.textAlign='center'; ctx.fillStyle='white'; ctx.font='italic 900 120px Urbanist'; ctx.fillText('VOLLEYFLOW.',540,350);
+                ctx.fillStyle='#6366f1'; ctx.font='900 40px Urbanist'; ctx.fillText(`ORGANIZER: @${orgName}`,540,430);
+                ctx.fillStyle='white'; ctx.font='900 90px Urbanist'; ctx.fillText(loc,540,900);
+                ctx.font='700 50px Urbanist'; ctx.fillText(time,540,1020);
+                ctx.fillStyle='#6366f1'; ctx.font='900 100px Urbanist'; ctx.fillText(`$${price}`,540,1250);
+                document.getElementById('story_preview').src = cvs.toDataURL("image/png");
+                document.getElementById('story_download_btn').href = cvs.toDataURL("image/png");
+                document.getElementById('story_modal').classList.remove('hidden');
+            },
 
             goToGame: (id) => {
                 currentView = 'detail'; selectedPositions = [];
                 onSnapshot(doc(db, "games", id), (d) => {
                     if(!d.exists()) return; const g = d.data(); const isMgr = user?.role==='super'||user?.name===g.createdBy;
                     document.getElementById('main-content').innerHTML = `
-                        <button onclick="location.reload()" class="mb-5 text-indigo-600 font-black text-xs uppercase"><i class="fa-solid fa-arrow-left mr-2"></i>Back</button>
-                        <div class="glass-card p-10 mb-8 bg-gradient-to-br from-indigo-50 to-blue-50 relative">
-                            <h2 class="text-3xl font-black italic mb-3">${g.location}</h2>
-                            <p class="text-sm font-bold text-indigo-600 bg-white inline-block px-3 py-1 rounded-md border border-indigo-100">${g.time}</p>
-                            ${g.description ? `<p class="mt-4 text-xs text-slate-500 whitespace-pre-wrap">${g.description}</p>` : ''}
-                            ${isMgr ? `<button onclick="vflow.copyWA('${id}','${g.location}','${g.time}', ${g.maxPlayers})" class="absolute right-6 bottom-6 bg-slate-900 text-white text-[10px] px-5 py-2.5 rounded-full font-black uppercase">Copy List</button>` : ''}
-                        </div>
-                        ${isMgr ? `<div class="glass-card p-6 mb-8 border-indigo-100 bg-white"><div class="grid grid-cols-2 gap-4 mb-4"><div class="bg-slate-50 p-4 rounded-2xl"><p class="text-[9px] uppercase">已收金額</p><p class="text-xl font-black text-emerald-600" id="stat-paid">$0</p></div><div class="bg-slate-50 p-4 rounded-2xl"><p class="text-[9px] uppercase">預計利潤</p><p class="text-xl font-black" id="stat-profit">$0</p></div></div></div>` : ''}
-                        <div class="glass-card p-8 mb-8">
-                            <div class="flex justify-between items-center mb-6"><span class="font-black italic text-slate-500 text-[11px] uppercase">Registration</span><span id="p-count" class="text-indigo-700 font-black text-[11px] bg-indigo-50 px-3 py-1 rounded-md uppercase">Loading...</span></div>
-                            <div class="space-y-3 mb-5">
-                                <input id="nickname" type="text" placeholder="你的暱稱 (顯示於名單)" class="input-light font-bold text-center">
-                                <input id="ig" type="text" placeholder="@Instagram (核實用)" class="input-light font-bold text-center">
+                        <button onclick="location.reload()" class="mb-6 flex items-center gap-2 text-slate-400 font-black text-[10px] uppercase tracking-widest"><i class="fa-solid fa-chevron-left"></i> Back to Gallery</button>
+                        
+                        <div class="glass-card p-10 mb-8 bg-slate-900 text-white relative overflow-hidden">
+                            <div class="relative z-10">
+                                <h2 class="text-4xl font-black italic mb-4 tracking-tighter">${g.location}</h2>
+                                <span class="bg-indigo-600 px-4 py-1.5 rounded-full text-[10px] font-black uppercase">${g.time}</span>
+                                ${g.description ? `<p class="mt-8 text-sm font-medium text-slate-400 leading-relaxed">${g.description}</p>` : ''}
                             </div>
-                            <div class="grid grid-cols-1 gap-2.5 mb-8">${['Setter (二傳)','Outside Hitter (大搥)','Middle Blocker (快攻)','Opposite (接應)','Libero (自由人)'].map(p=>`<button data-pos="${p}" onclick="vflow.setPos('${p}')" class="pos-btn py-4 rounded-[16px] text-[11px] font-black uppercase">${p}</button>`).join('')}</div>
-                            <button onclick="vflow.prepJoin('${id}', ${g.price}, '${g.location}', '${g.time}', ${g.maxPlayers}, '${g.createdBy}')" class="w-full bg-slate-900 text-white font-black py-5 rounded-[20px] shadow-xl uppercase text-sm">立刻報名 $${g.price}</button>
+                            <i class="fa-solid fa-volleyball absolute -right-10 -bottom-10 text-[200px] opacity-10 rotate-12"></i>
+                            ${isMgr ? `<button onclick="vflow.copyWA('${id}','${g.location}','${g.time}', ${g.maxPlayers})" class="mt-8 bg-white text-slate-900 text-[9px] px-6 py-3 rounded-full font-black uppercase shadow-xl">Copy List</button>` : ''}
                         </div>
-                        <div id="player-list" class="space-y-3 pb-20"></div>
+
+                        ${isMgr ? `
+                        <div class="grid grid-cols-2 gap-4 mb-8">
+                            <div class="glass-card p-6"><p class="text-[8px] font-black text-slate-400 uppercase mb-1">Received</p><p class="text-2xl font-black text-emerald-500" id="stat-paid">$0</p></div>
+                            <div class="glass-card p-6"><p class="text-[8px] font-black text-slate-400 uppercase mb-1">Projection</p><p class="text-2xl font-black text-slate-900" id="stat-profit">$0</p></div>
+                        </div>` : ''}
+
+                        <div class="glass-card p-8 mb-8">
+                            <div class="flex justify-between items-center mb-8">
+                                <span class="font-black italic text-slate-400 text-[11px] uppercase tracking-widest">Entry Registration</span>
+                                <span id="p-count" class="text-indigo-600 font-black text-[10px] bg-indigo-50 px-3 py-1.5 rounded-xl">0 / ${g.maxPlayers}</span>
+                            </div>
+                            
+                            <div class="space-y-4 mb-8">
+                                <div class="relative">
+                                    <input id="nickname" type="text" placeholder="Your Alias" class="input-premium">
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-300 uppercase">Nickname</span>
+                                </div>
+                                <div class="relative">
+                                    <input id="ig" type="text" placeholder="@Instagram" class="input-premium">
+                                    <span class="absolute right-4 top-1/2 -translate-y-1/2 text-[9px] font-black text-slate-300 uppercase">Verification</span>
+                                </div>
+                            </div>
+
+                            <p class="text-[9px] font-black text-slate-300 uppercase mb-4 text-center tracking-widest text-xs">Select Position (Max 2)</p>
+                            <div class="grid grid-cols-1 gap-3 mb-8">
+                                ${['Setter (二傳)','Outside Hitter (大搥)','Middle Blocker (快攻)','Opposite (接應)','Libero (自由人)'].map(p=>`<button data-pos="${p}" onclick="vflow.setPos('${p}')" class="pos-btn py-5 text-[10px] font-black uppercase tracking-tight">${p}</button>`).join('')}
+                            </div>
+                            <button onclick="vflow.prepJoin('${id}', ${g.price}, '${g.location}', '${g.time}', ${g.maxPlayers}, '${g.createdBy}')" class="w-full btn-primary font-black py-6 rounded-[24px] shadow-2xl uppercase text-xs tracking-widest">Register Session $${g.price}</button>
+                        </div>
+
+                        <div id="player-list" class="space-y-4 pb-20"></div>
                     `;
                     vflow.listenPlayers(id, isMgr, g.maxPlayers, g.price, g.cost||0);
                 });
@@ -334,41 +484,60 @@
                     const players = []; let paidCount = 0; let mainCount = 0;
                     snap.forEach(d => { const p = {id: d.id, ...d.data()}; players.push(p); if(players.length<=max) mainCount++; if(p.status==='confirmed' && players.length<=max) paidCount++; });
                     if(document.getElementById('p-count')) document.getElementById('p-count').innerText = `${mainCount} / ${max}`;
-                    if(isMgr && document.getElementById('stat-paid')) { document.getElementById('stat-paid').innerText = `$${paidCount * price}`; document.getElementById('stat-profit').innerText = `$${(mainCount * price) - cost}`; }
+                    if(isMgr && document.getElementById('stat-paid')) { 
+                        document.getElementById('stat-paid').innerText = `$${paidCount * price}`; 
+                        document.getElementById('stat-profit').innerText = `$${(mainCount * price) - cost}`; 
+                    }
                     if(isMgr) {
                         document.getElementById('player-list').innerHTML = players.map((p, index) => {
                             const isWait = index >= max;
                             const nameTag = p.nickname ? `${p.nickname} (${p.ig})` : p.ig;
                             return `
-                            <div class="glass-card p-5 border flex justify-between items-center ${isWait ? 'opacity-60 bg-amber-50' : 'bg-white'}">
-                                <div><p class="font-black text-slate-800 text-sm">${isWait ? 'W'+(index-max+1) : index+1}. ${nameTag}</p><p class="text-[9px] font-black uppercase ${p.status==='confirmed'?'text-emerald-500':'text-orange-500'}">${p.status==='confirmed'?'PAID':'PENDING'} - ${p.pos}</p></div>
-                                <div class="flex gap-1.5"><button onclick="vflow.confirmP('${gid}','${p.id}')" class="bg-emerald-50 text-emerald-600 px-3 py-2 rounded-lg text-[9px] font-black uppercase">核實</button><button onclick="vflow.delP('${gid}','${p.id}')" class="bg-slate-100 px-3 py-2 rounded-lg text-[9px] font-black uppercase">踢走</button>${p.receipt ? `<button onclick="vflow.viewReceipt('${p.receipt}')" class="bg-indigo-50 text-indigo-600 px-3 py-2 rounded-lg text-[9px] font-black uppercase">收據</button>` : ''}</div>
+                            <div class="glass-card p-6 flex justify-between items-center ${isWait ? 'bg-amber-50/50' : ''}">
+                                <div>
+                                    <p class="font-black text-slate-900 text-sm">${isWait ? 'W'+(index-max+1) : index+1}. ${nameTag}</p>
+                                    <div class="flex gap-2 mt-1">
+                                        <span class="text-[8px] font-black uppercase px-2 py-0.5 rounded-md bg-slate-100 text-slate-500">${p.pos}</span>
+                                        <span class="text-[8px] font-black uppercase px-2 py-0.5 rounded-md ${p.status==='confirmed'?'bg-emerald-100 text-emerald-600':'bg-orange-100 text-orange-600'}">${p.status}</span>
+                                    </div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <button onclick="vflow.confirmP('${gid}','${p.id}')" class="w-8 h-8 rounded-full bg-emerald-50 text-emerald-600 flex items-center justify-center text-xs shadow-sm"><i class="fa-solid fa-check"></i></button>
+                                    <button onclick="vflow.delP('${gid}','${p.id}')" class="w-8 h-8 rounded-full bg-red-50 text-red-400 flex items-center justify-center text-xs shadow-sm"><i class="fa-solid fa-trash-can"></i></button>
+                                    ${p.receipt ? `<button onclick="vflow.viewReceipt('${p.receipt}')" class="w-8 h-8 rounded-full bg-indigo-50 text-indigo-600 flex items-center justify-center text-xs shadow-sm"><i class="fa-solid fa-receipt"></i></button>` : ''}
+                                </div>
                             </div>`;
                         }).join('');
-                    } else { document.getElementById('player-list').innerHTML = `<p class="text-center text-slate-400 py-10 uppercase text-[10px] font-black">名單保護中</p>`; }
+                    } else { 
+                        document.getElementById('player-list').innerHTML = `<div class="p-10 text-center"><i class="fa-solid fa-lock text-slate-200 text-3xl mb-4"></i><p class="text-[9px] font-black text-slate-300 uppercase tracking-[0.2em]">Roster Privacy Enabled</p></div>`; 
+                    }
                 });
             },
             
             confirmP: async (gid, pid) => await updateDoc(doc(db, `games/${gid}/players`, pid), { status: "confirmed" }),
-            delP: async (gid, pid) => { if(confirm("確定踢走？")) await deleteDoc(doc(db, `games/${gid}/players`, pid)); },
-            addAdminAccount: async () => { const u=document.getElementById('new_admin_u').value.trim(); const p=document.getElementById('new_admin_p').value.trim(); if(!u||!p) return; await setDoc(doc(db, "admins", u), { username:u, password:p, role:'organizer' }); alert("成功"); vflow.loadAdminList(); },
-            loadAdminList: async () => { const snap = await getDocs(collection(db, "admins")); let h=""; snap.forEach(d => { if(d.id!=='Manusyip') h+=`<div class="flex justify-between p-2 border-b"><span>@${d.id}</span><button onclick="vflow.delAdmin('${d.id}')" class="text-red-500 text-xs">刪除</button></div>`; }); document.getElementById('admin-list-container').innerHTML=h; },
-            delAdmin: async (id) => { if(confirm("刪除?")) await deleteDoc(doc(db, "admins", id)); vflow.loadAdminList(); },
+            delP: async (gid, pid) => { if(confirm("Remove Player?")) await deleteDoc(doc(db, `games/${gid}/players`, pid)); },
+            addAdminAccount: async () => { const u=document.getElementById('new_admin_u').value.trim(); const p=document.getElementById('new_admin_p').value.trim(); if(!u||!p) return; await setDoc(doc(db, "admins", u), { username:u, password:p, role:'organizer' }); alert("Admin Added"); vflow.loadAdminList(); },
+            loadAdminList: async () => { const snap = await getDocs(collection(db, "admins")); let h=""; snap.forEach(d => { if(d.id!=='Manusyip') h+=`<div class="flex justify-between p-3 bg-white rounded-xl mb-2"><span>@${d.id}</span><button onclick="vflow.delAdmin('${d.id}')" class="text-red-500 font-bold">X</button></div>`; }); document.getElementById('admin-list-container').innerHTML=h; },
+            delAdmin: async (id) => { if(confirm("Delete Admin?")) await deleteDoc(doc(db, "admins", id)); vflow.loadAdminList(); },
             copyWA: async (gid, loc, time, max) => {
                 const snap=await getDocs(query(collection(db, `games/${gid}/players`), orderBy("timestamp", "asc")));
-                let txt=`🏐 *VOLLEYFLOW 名單*\n📍 ${loc}\n⏰ ${time}\n\n`;
+                let txt=`🏐 *VOLLEYFLOW PRO*\n📍 ${loc}\n⏰ ${time}\n\n`;
                 let i=0; snap.forEach(d=>{ 
                     const p=d.data();
                     const nameTag = p.nickname ? `${p.nickname} (${p.ig})` : p.ig;
-                    if(i===max) txt+=`\n--- ⏳ 後補 ---\n`; 
+                    if(i===max) txt+=`\n--- ⏳ WAITING ---\n`; 
                     txt+=`${i>=max?'W'+(i-max+1):i+1}. ${nameTag} (${p.pos}) ${p.status==='confirmed'?'✅':'⏳'}\n`; i++; 
                 });
-                navigator.clipboard.writeText(txt); alert("已複製");
+                navigator.clipboard.writeText(txt); alert("List Copied!");
             }
         };
 
         if (user) { 
-            document.getElementById('admin-status').innerHTML = `<span class="bg-indigo-50 border border-indigo-100 text-indigo-700 text-[10px] font-black px-4 py-1.5 rounded-full uppercase tracking-widest shadow-sm">Org: ${user.name}</span><button onclick="sessionStorage.clear();location.reload();" class="text-[10px] font-black text-slate-400 ml-4 uppercase">Logout</button>`; 
+            document.getElementById('admin-status').innerHTML = `
+                <div class="flex items-center justify-center gap-4">
+                    <span class="bg-slate-900 text-white text-[9px] font-black px-4 py-2 rounded-full uppercase tracking-widest shadow-lg shadow-indigo-100">Portal: ${user.name}</span>
+                    <button onclick="sessionStorage.clear();location.reload();" class="text-[9px] font-black text-slate-400 uppercase tracking-widest">Logout</button>
+                </div>`; 
             document.getElementById('admin-panel').classList.remove('hidden'); 
             if(user.role==='super') { document.getElementById('super-admin-tools').classList.remove('hidden'); vflow.loadAdminList(); } 
         }
