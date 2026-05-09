@@ -74,10 +74,9 @@
                         <div class="flex gap-1"><input id="start_time" type="time" value="19:00" class="input-flat !p-2 text-xs"><input id="end_time" type="time" value="21:00" class="input-flat !p-2 text-xs"></div>
                     </div>
                     <textarea id="new_desc" placeholder="場地或規則描述..." class="input-flat h-20 resize-none"></textarea>
-                    <div class="grid grid-cols-3 gap-4">
+                    <div class="grid grid-cols-2 gap-4">
                         <div><label class="section-title !tracking-widest !text-[8px]">Max</label><input id="new_max" type="number" value="15" class="input-flat font-bold"></div>
                         <div><label class="section-title !tracking-widest !text-[8px]">Price</label><input id="new_price" type="number" value="30" class="input-flat font-bold"></div>
-                        <div><label class="section-title !tracking-widest !text-[8px]">Cost</label><input id="new_cost" type="number" value="240" class="input-flat font-bold text-red-500"></div>
                     </div>
                     <div class="pt-4 border-t border-gray-100">
                         <p class="section-title mb-4">Payment Settings</p>
@@ -155,7 +154,7 @@
                 if(!loc || !dateVal) { vflow.showToast("請填妥資料", true); return; }
                 const weekDay = ["日","一","二","三","四","五","六"][new Date(dateVal).getDay()];
                 const fullTime = `${dateVal} (${weekDay}) ${$('start_time').value} - ${$('end_time').value}`;
-                await addDoc(collection(db, "games"), { location: loc, time: fullTime, description: $('new_desc').value, maxPlayers: parseInt($('new_max').value), price: parseInt($('new_price').value), cost: parseInt($('new_cost').value||0), createdBy: user.name, approved: user.role === 'super', timestamp: serverTimestamp() });
+                await addDoc(collection(db, "games"), { location: loc, time: fullTime, description: $('new_desc').value, maxPlayers: parseInt($('new_max').value), price: parseInt($('new_price').value), createdBy: user.name, approved: user.role === 'super', timestamp: serverTimestamp() });
                 vflow.sendTG(`🆕 <b>新活動發佈</b>\n場地：${loc}\n發佈人：@${user.name}`); vflow.showToast("發佈成功！"); setTimeout(() => location.reload(), 1500);
             },
             renderList: (games) => {
@@ -199,7 +198,6 @@
                 if(!nick || !ig.startsWith('@') || selectedPositions.length===0) { vflow.showToast("資料錯誤", true); return; }
                 const adminDoc = await getDoc(doc(db, "admins", org)); const orgData = adminDoc.data() || {};
                 
-                // 【升級核心】強化 PayMe 及 Alipay 付款介面
                 $('content-payme').innerHTML = orgData.payUrl ? 
                     `<div class="p-4 bg-red-50 rounded-lg border border-red-100"><p class="text-[10px] text-red-800 mb-3 font-bold tracking-widest">點擊下方按鈕跳轉至 PayMe</p><a href="${orgData.payUrl}" target="_blank" class="flex items-center justify-center w-full bg-[#E02443] text-white rounded-lg py-4 text-xs font-bold shadow-md active:scale-95 transition relative z-10"><i class="fa-solid fa-link mr-2"></i> 撳呢度用 PayMe 俾錢</a></div>` : 
                     '<p class="text-xs text-gray-400 py-4">管理員未設定 PayMe 連結</p>';
