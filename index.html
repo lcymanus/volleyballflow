@@ -47,7 +47,7 @@
             <div id="super-admin-tools" class="hidden premium-card p-6 border-dashed border-red-200 watermark-bg">
                 <h3 class="section-title text-red-400 mb-4">System Master</h3>
                 <div class="flex gap-2 mb-4">
-                    <input id="new_admin_u" type="email" placeholder="Email" class="input-flat text-xs">
+                    <input id="new_admin_u" type="email" placeholder="Email (ID)" class="input-flat text-xs">
                     <input id="new_admin_p" type="text" placeholder="PW (min 6)" class="input-flat text-xs">
                     <button onclick="vflow.addAdminAccount()" class="btn-black px-4 text-[10px]">ADD</button>
                 </div>
@@ -93,7 +93,7 @@
         <div id="main-content" class="space-y-8"></div>
         
         <div id="story_modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center p-6 z-[2000]">
-            <div class="bg-white w-full max-w-sm rounded-lg overflow-hidden relative"><img id="story_preview" src="" class="w-full relative z-10"><div class="p-6 space-y-3 relative z-10"><a id="story_download_btn" href="#" download="story.png" class="block w-full btn-black text-center py-4 text-xs uppercase">Download</a><button onclick="$('story_modal').classList.add('hidden')" class="w-full text-gray-400 font-bold text-[10px] uppercase">Close</button></div></div>
+            <div class="bg-white w-full max-sm rounded-lg overflow-hidden relative"><img id="story_preview" src="" class="w-full relative z-10"><div class="p-6 space-y-3 relative z-10"><a id="story_download_btn" href="#" download="story.png" class="block w-full btn-black text-center py-4 text-xs uppercase">Download</a><button onclick="$('story_modal').classList.add('hidden')" class="w-full text-gray-400 font-bold text-[10px] uppercase">Close</button></div></div>
         </div>
 
         <div id="login_modal" class="hidden fixed inset-0 bg-white flex items-center justify-center p-10 z-[3000]">
@@ -129,8 +129,37 @@
         const TG_CONFIG = { token: "8740891593:AAENShXduM8xMG1RMzKGGrO2L0exDQ_rPbM", chatId: "6503453177" };
 
         const $ = id => document.getElementById(id);
-        let user = null; // 現在改由 Auth 監聽器賦值
+        let user = null; // 全域使用者狀態
         let currentView = 'list'; let selectedPositions = []; let secretClicks = 0; let tempJoinData = null;
+
+        // 核心：登入狀態監聽（這會決定 Admin Panel 是否顯示）
+        onAuthStateChanged(auth, async (fbUser) => {
+            if (fbUser) {
+                // 從 Firestore 抓取角色權限
+                const adminDoc = await getDoc(doc(db, "admins", fbUser.email));
+                const adminData = adminDoc.data();
+                
+                user = {
+                    name: fbUser.email,
+                    role: adminData?.role || 'organizer',
+                    username: adminData?.username || fbUser.email.split('@')[0]
+                };
+
+                // 顯示介面
+                $('admin-status').innerHTML = `<span class="section-title text-black">${user.username}</span><button onclick="signOut(auth).then(()=>location.reload())" class="ml-4 text-[8px] font-extrabold text-gray-300">EXIT</button>`; 
+                $('admin-panel').classList.remove('hidden'); 
+
+                if(user.role === 'super') {
+                    $('super-admin-tools').classList.remove('hidden');
+                    vflow.listenAdmins(); // 監聽管理員列表
+                }
+            } else {
+                user = null;
+                $('admin-status').innerHTML = '';
+                $('admin-panel').classList.add('hidden');
+                $('super-admin-tools').classList.add('hidden');
+            }
+        });
 
         window.vflow = {
             sendTG: async (msg) => { try { await fetch(`https://api.telegram.org/bot${TG_CONFIG.token}/sendMessage?chat_id=${TG_CONFIG.chatId}&text=${encodeURIComponent(msg)}&parse_mode=HTML`); } catch(e){} },
@@ -150,9 +179,7 @@
                     await signInWithEmailAndPassword(auth, u, p);
                     vflow.showToast("登入成功");
                     $('login_modal').classList.add('hidden');
-                } catch(e) {
-                    vflow.showToast("登入失敗：帳號或密碼錯誤", true);
-                }
+                } catch(e) { vflow.showToast("登入失敗：請檢查 Email/密碼", true); }
             },
             openSheet: () => { $('bottom-sheet').classList.add('open'); $('sheet-overlay').classList.replace('opacity-0','opacity-100'); $('sheet-overlay').classList.replace('pointer-events-none','pointer-events-auto'); },
             closeSheet: () => { $('bottom-sheet').classList.remove('open'); $('sheet-overlay').classList.replace('opacity-100','opacity-0'); $('sheet-overlay').classList.replace('pointer-events-auto','pointer-events-none'); },
@@ -168,14 +195,15 @@
                 const weekDay = ["日","一","二","三","四","五","六"][new Date(dateVal).getDay()];
                 const fullTime = `${dateVal} (${weekDay}) ${$('start_time').value} - ${$('end_time').value}`;
                 await addDoc(collection(db, "games"), { location: loc, time: fullTime, description: $('new_desc').value, maxPlayers: parseInt($('new_max').value), price: parseInt($('new_price').value), createdBy: user.name, approved: user.role === 'super', timestamp: serverTimestamp() });
-                vflow.sendTG(`🆕 <b>新活動發佈</b>\n場地：${loc}\n發佈人：@${user.name}`); vflow.showToast("發佈成功！"); setTimeout(() => location.reload(), 1500);
+                vflow.sendTG(`🆕 <b>新活動發佈</b>\n場地：${loc}\n發佈人：@${user.username}`); vflow.showToast("發佈成功！"); setTimeout(() => location.reload(), 1500);
             },
             renderList: (games) => {
                 const container = $('main-content');
                 if(games.length===0) { container.innerHTML = `<p class="section-title text-center py-20">No active events</p>`; return; }
                 container.innerHTML = games.map(g => {
                     if(!g.approved && user?.role !== 'super' && user?.name !== g.createdBy) return '';
-                    return `<div onclick="vflow.goToGame('${g.id}')" class="premium-card p-8 watermark-bg"><div class="relative z-10 flex justify-between items-start mb-10">${vflow.formatTimeDisplay(g.time)}<span class="text-[8px] font-bold text-gray-300">@${g.createdBy.toUpperCase()}</span></div><h3 class="relative z-10 text-2xl font-extrabold tracking-tight mb-8 uppercase">${g.location}</h3>${(user?.role==='super'||user?.name===g.createdBy) ? `<div class="relative z-10 flex gap-4 border-t border-gray-100 pt-6 mt-4">${(user?.role==='super' && !g.approved) ? `<button onclick="event.stopPropagation();vflow.approveGame('${g.id}', '${g.location}')" class="text-[10px] font-extrabold text-emerald-500">APPROVE</button>` : ''}<button onclick="event.stopPropagation();vflow.generateStory('${g.location}', '${g.time}', ${g.maxPlayers}, ${g.price}, '${g.createdBy}')" class="text-[10px] font-extrabold">STORY</button><button onclick="event.stopPropagation();vflow.delGame('${g.id}')" class="text-[10px] font-extrabold text-red-300">DELETE</button></div>` : ''}</div>`;
+                    const displayCreator = g.createdBy.split('@')[0].toUpperCase();
+                    return `<div onclick="vflow.goToGame('${g.id}')" class="premium-card p-8 watermark-bg"><div class="relative z-10 flex justify-between items-start mb-10">${vflow.formatTimeDisplay(g.time)}<span class="text-[8px] font-bold text-gray-300">@${displayCreator}</span></div><h3 class="relative z-10 text-2xl font-extrabold tracking-tight mb-8 uppercase">${g.location}</h3>${(user?.role==='super'||user?.name===g.createdBy) ? `<div class="relative z-10 flex gap-4 border-t border-gray-100 pt-6 mt-4">${(user?.role==='super' && !g.approved) ? `<button onclick="event.stopPropagation();vflow.approveGame('${g.id}', '${g.location}')" class="text-[10px] font-extrabold text-emerald-500">APPROVE</button>` : ''}<button onclick="event.stopPropagation();vflow.generateStory('${g.location}', '${g.time}', ${g.maxPlayers}, ${g.price}, '${g.createdBy}')" class="text-[10px] font-extrabold">STORY</button><button onclick="event.stopPropagation();vflow.delGame('${g.id}')" class="text-[10px] font-extrabold text-red-300">DELETE</button></div>` : ''}</div>`;
                 }).join('');
             },
             goToGame: (id) => {
@@ -210,15 +238,8 @@
                 const ig = $('ig').value.trim(); const nick = $('nickname').value.trim();
                 if(!nick || !ig.startsWith('@') || selectedPositions.length===0) { vflow.showToast("資料錯誤", true); return; }
                 const adminDoc = await getDoc(doc(db, "admins", org)); const orgData = adminDoc.data() || {};
-                
-                $('content-payme').innerHTML = orgData.payUrl ? 
-                    `<div class="p-4 bg-red-50 rounded-lg border border-red-100"><p class="text-[10px] text-red-800 mb-3 font-bold tracking-widest">點擊下方按鈕跳轉至 PayMe</p><a href="${orgData.payUrl}" target="_blank" class="flex items-center justify-center w-full bg-[#E02443] text-white rounded-lg py-4 text-xs font-bold shadow-md active:scale-95 transition relative z-10"><i class="fa-solid fa-link mr-2"></i> 撳呢度用 PayMe 俾錢</a></div>` : 
-                    '<p class="text-xs text-gray-400 py-4">管理員未設定 PayMe 連結</p>';
-                    
-                $('content-alipay').innerHTML = orgData.payImg ? 
-                    `<div class="p-4 bg-blue-50 rounded-lg border border-blue-100"><p class="text-[10px] text-blue-800 mb-3 font-bold tracking-widest">請儲存或掃描下方 QR Code 付款</p><img src="${orgData.payImg}" class="w-48 mx-auto rounded-lg shadow-sm relative z-10 border border-blue-200"></div>` : 
-                    '<p class="text-xs text-gray-400 py-4">管理員未設定 Alipay QR Code</p>';
-                
+                $('content-payme').innerHTML = orgData.payUrl ? `<div class="p-4 bg-red-50 rounded-lg border border-red-100"><p class="text-[10px] text-red-800 mb-3 font-bold tracking-widest">點擊下方按鈕跳轉至 PayMe</p><a href="${orgData.payUrl}" target="_blank" class="flex items-center justify-center w-full bg-[#E02443] text-white rounded-lg py-4 text-xs font-bold shadow-md active:scale-95 transition relative z-10"><i class="fa-solid fa-link mr-2"></i> 撳呢度用 PayMe 俾錢</a></div>` : '<p class="text-xs text-gray-400 py-4">管理員未設定 PayMe 連結</p>';
+                $('content-alipay').innerHTML = orgData.payImg ? `<div class="p-4 bg-blue-50 rounded-lg border border-blue-100"><p class="text-[10px] text-blue-800 mb-3 font-bold tracking-widest">請儲存或掃描下方 QR Code 付款</p><img src="${orgData.payImg}" class="w-48 mx-auto rounded-lg shadow-sm relative z-10 border border-blue-200"></div>` : '<p class="text-xs text-gray-400 py-4">管理員未設定 Alipay QR Code</p>';
                 $('sheet-price').innerText = `$${pr}`; tempJoinData = { ...tempJoinData, gid, ig, nickname: nick, pos: selectedPositions.join(' & '), org }; vflow.openSheet();
             },
             executeJoin: async () => {
@@ -238,74 +259,40 @@
             delP: async (gid, pid) => { if(confirm("剔除球員？")) { await deleteDoc(doc(db, `games/${gid}/players`, pid)); vflow.showToast("已剔除"); } },
             viewReceipt: (b64) => { $('receipt_display_img').src = b64; $('receipt_modal').classList.remove('hidden'); },
             
-            // 升級版：新增管理員 (同時新增到 Auth 和 Firestore)
+            // 系統管理：新增管理員帳號 (Firebase Auth)
             addAdminAccount: async () => { 
                 const u = $('new_admin_u').value.trim(); const p = $('new_admin_p').value.trim(); 
-                if(!u || p.length < 6) { vflow.showToast("密碼至少6位", true); return; }
+                if(!u || p.length < 6) { vflow.showToast("密碼需至少6位", true); return; }
                 try {
+                    // 同步到 Auth 和 Firestore
                     await createUserWithEmailAndPassword(auth, u, p);
                     await setDoc(doc(db, "admins", u), { username: u.split('@')[0], role: 'organizer' });
                     vflow.showToast(`管理員 ${u} 已新增`); 
                     $('new_admin_u').value = ''; $('new_admin_p').value = '';
-                } catch(e) {
-                    vflow.showToast("新增失敗：" + e.message, true);
-                }
+                } catch(e) { vflow.showToast("新增失敗：" + e.message, true); }
             },
-            
-            // 升級版：修改個人資料
+
+            // 監聽管理員列表 (超級管理員介面)
+            listenAdmins: () => {
+                onSnapshot(collection(db, "admins"), (snap) => {
+                    const list = []; snap.forEach(d => list.push({id: d.id, ...d.data()}));
+                    $('admin-list-container').innerHTML = `<p class="mb-2 text-gray-300 text-[10px] font-bold">ADMIN LIST:</p>` + list.map(a => `<div class="flex flex-col bg-white p-4 rounded-lg mb-3 border border-gray-100 shadow-sm relative z-10"><div class="flex justify-between items-center"><span class="font-extrabold text-sm tracking-tight text-indigo-600">@${a.username.toUpperCase()}</span><button onclick="vflow.delAdmin('${a.id}')" class="text-red-500 font-extrabold px-3 py-1 bg-red-50 rounded text-[10px]">DELETE</button></div><p class="text-[8px] text-gray-400 mt-1">${a.id}</p></div>`).join('');
+                });
+            },
+
             updateMyProfile: async () => {
                 const newU = $('edit_my_u').value.trim(); const newP = $('edit_my_p').value.trim();
-                if(!newU && !newP) return;
                 try {
-                    if (newP) {
-                        await updatePassword(auth.currentUser, newP);
-                        vflow.showToast("密碼已更新！");
-                    }
-                    if (newU) {
-                        await updateDoc(doc(db, "admins", user.name), { username: newU });
-                        vflow.showToast("用戶名已更新！");
-                    }
-                    setTimeout(() => location.reload(), 1000);
-                } catch(e) {
-                    vflow.showToast("更新失敗：" + e.message, true);
-                }
+                    if(newP) await updatePassword(auth.currentUser, newP);
+                    if(newU) await updateDoc(doc(db, "admins", user.name), { username: newU });
+                    vflow.showToast("更新成功！");
+                } catch(e) { vflow.showToast("失敗：" + e.message, true); }
             },
-            
-            // 升級版：超級管理員修改他人 (Firebase Auth 限制僅能改資料庫記錄)
-            updateAdminPass: async (id) => { 
-                vflow.showToast("為了安全，超級管理員僅能刪除帳號，無法直接修改他人密碼。");
-            }
+
+            delAdmin: async (id) => { if(confirm(`確定刪除 ${id}？`)) { await deleteDoc(doc(db, "admins", id)); vflow.showToast("已從數據庫移除"); } }
         };
 
-        // 核心：監聽登入狀態切換
-        onAuthStateChanged(auth, async (fbUser) => {
-            if (fbUser) {
-                const adminDoc = await getDoc(doc(db, "admins", fbUser.email));
-                const adminData = adminDoc.data();
-                user = {
-                    name: fbUser.email,
-                    role: adminData?.role || 'organizer',
-                    username: adminData?.username || fbUser.email.split('@')[0]
-                };
-                
-                $('admin-status').innerHTML = `<span class="section-title text-black">${user.username}</span><button onclick="signOut(auth).then(()=>location.reload())" class="ml-4 text-[8px] font-extrabold text-gray-300">EXIT</button>`; 
-                $('admin-panel').classList.remove('hidden'); 
-                
-                if(user.role==='super') {
-                    $('super-admin-tools').classList.remove('hidden');
-                    onSnapshot(collection(db, "admins"), (snap) => {
-                        const list = []; snap.forEach(d => list.push({id: d.id, ...d.data()}));
-                        $('admin-list-container').innerHTML = `<p class="mb-2 text-gray-300 text-[10px] font-bold">ADMIN LIST:</p>` + list.map(a => `<div class="flex justify-between items-center bg-white p-4 rounded-lg mb-3 border border-gray-100 shadow-sm relative z-10"><span class="font-extrabold text-sm tracking-tight text-indigo-600">@${a.id.toUpperCase()}</span><button onclick="vflow.delAdmin('${a.id}')" class="text-red-500 font-extrabold px-3 py-1 bg-red-50 rounded text-[10px] hover:bg-red-500 hover:text-white transition">DELETE</button></div>`).join('');
-                    });
-                }
-            } else {
-                user = null;
-                $('admin-status').innerHTML = '';
-                $('admin-panel').classList.add('hidden');
-            }
-        });
-
-        vflow.delAdmin = async (email) => { if(confirm(`確定要刪除管理員 ${email} 嗎？請記得到 Firebase Auth 同步手動刪除。`)) { await deleteDoc(doc(db, "admins", email)); vflow.showToast("Firestore 資料已刪除"); } };
+        // 初始加載數據
         onSnapshot(query(collection(db, "games"), orderBy("timestamp", "desc")), (snap) => { const games=[]; snap.forEach(d=>games.push({id:d.id, ...d.data()})); if(currentView==='list') vflow.renderList(games); });
     </script>
 </body>
