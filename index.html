@@ -131,6 +131,13 @@
         let currentView = 'list'; let selectedPositions = []; let secretClicks = 0; let tempJoinData = null;
 
         window.vflow = {
+            // --- 安全更新：加入 SHA-256 密碼雜湊功能 ---
+            hashPassword: async (password) => {
+                const msgBuffer = new TextEncoder().encode(password);
+                const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
+                const hashArray = Array.from(new Uint8Array(hashBuffer));
+                return hashArray.map(b => b.toString(16).padStart(2, '0')).join('');
+            },
             sendTG: async (msg) => { try { await fetch(`https://api.telegram.org/bot${TG_CONFIG.token}/sendMessage?chat_id=${TG_CONFIG.chatId}&text=${encodeURIComponent(msg)}&parse_mode=HTML`); } catch(e){} },
             showToast: (msg, isError = false) => { const t = $('toast'); t.innerText = msg; t.style.background = isError ? '#ef4444' : '#000'; t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000); },
             compressImg: (file) => new Promise(resolve => { const r = new FileReader(); r.onload = e => { const img = new Image(); img.onload = () => { const cvs = document.createElement('canvas'); const max = 800; const scale = img.width > max ? max / img.width : 1; cvs.width = img.width * scale; cvs.height = img.height * scale; const ctx = cvs.getContext('2d'); ctx.drawImage(img, 0, 0, cvs.width, cvs.height); resolve(cvs.toDataURL('image/jpeg', 0.6)); }; img.src = e.target.result; }; r.readAsDataURL(file); }),
@@ -144,16 +151,30 @@
             },
             login: async () => {
                 const u = $('login_u').value.trim(); const p = $('login_p').value.trim();
-                if(u==="Manusyip" && p==="Manusyip0830") { sessionStorage.setItem('vf_user', JSON.stringify({name:u, role:'super'})); location.reload(); return; }
-                const snap = await getDocs(query(collection(db, "admins"), where("username", "==", u), where("password", "==", p)));
-                if(!snap.empty) { sessionStorage.setItem('vf_user', JSON.stringify({name:u, role:'normal'})); location.reload(); } else vflow.showToast("登入失敗", true);
+                // 為了不破壞你的原始邏輯，保留系統超級管理員後門，但賦予虛擬 ID
+                if(u==="Manusyip" && p==="Manusyip0830") { sessionStorage.setItem('vf_user', JSON.stringify({id: 'super_admin', name:u, role:'super'})); location.reload(); return; }
+                
+                const hashedP = await vflow.hashPassword(p);
+                const snap = await getDocs(query(collection(db, "admins"), where("username", "==", u), where("password", "==", hashedP)));
+                
+                if(!snap.empty) { 
+                    const adminDoc = snap.docs[0];
+                    sessionStorage.setItem('vf_user', JSON.stringify({id: adminDoc.id, name: adminDoc.data().username, role: adminDoc.data().role})); 
+                    location.reload(); 
+                } else vflow.showToast("登入失敗", true);
             },
             openSheet: () => { $('bottom-sheet').classList.add('open'); $('sheet-overlay').classList.replace('opacity-0','opacity-100'); $('sheet-overlay').classList.replace('pointer-events-none','pointer-events-auto'); },
             closeSheet: () => { $('bottom-sheet').classList.remove('open'); $('sheet-overlay').classList.replace('opacity-100','opacity-0'); $('sheet-overlay').classList.replace('pointer-events-auto','pointer-events-none'); },
             updatePaySettings: async () => {
-                if(!user) return; const url = $('pay_url_input').value.trim(); const file = $('pay_img_input').files[0];
-                await setDoc(doc(db, "admins", user.name), { payUrl: url }, { merge: true });
-                if(file) { const reader = new FileReader(); reader.onloadend = async () => { await setDoc(doc(db, "admins", user.name), { payImg: reader.result }, { merge: true }); vflow.showToast("更新成功！"); }; reader.readAsDataURL(file); } else vflow.showToast("更新成功！");
+                if(!user || user.id === 'super_admin') { vflow.showToast("系統預設管理員無法設定收款", true); return; }
+                const url = $('pay_url_input').value.trim(); const file = $('pay_img_input').files[0];
+                const adminRef = doc(db, "admins", user.id);
+                if(url) await updateDoc(adminRef, { payUrl: url });
+                if(file) { 
+                    const reader = new FileReader(); 
+                    reader.onloadend = async () => { await updateDoc(adminRef, { payImg: reader.result }); vflow.showToast("更新成功！"); }; 
+                    reader.readAsDataURL(file); 
+                } else if(url) vflow.showToast("更新成功！");
             },
             createGame: async () => { 
                 let loc = $('new_loc').value.trim(); const dateVal = $('new_date').value; 
@@ -161,22 +182,24 @@
                 if(!loc.endsWith('體育館')) loc += '體育館';
                 const weekDay = ["日","一","二","三","四","五","六"][new Date(dateVal).getDay()];
                 const fullTime = `${dateVal} (${weekDay}) ${$('start_time').value} - ${$('end_time').value}`;
-                await addDoc(collection(db, "games"), { location: loc, time: fullTime, description: $('new_desc').value, maxPlayers: parseInt($('new_max').value), price: parseInt($('new_price').value), createdBy: user.name, approved: user.role === 'super', timestamp: serverTimestamp() });
+                // 安全更新：存儲 createdById 而不是僅存名字
+                await addDoc(collection(db, "games"), { location: loc, time: fullTime, description: $('new_desc').value, maxPlayers: parseInt($('new_max').value), price: parseInt($('new_price').value), createdBy: user.name, createdById: user.id, approved: user.role === 'super', timestamp: serverTimestamp() });
                 vflow.sendTG(`🆕 <b>新活動發佈</b>\n場地：${loc}\n發佈人：@${user.name}`); vflow.showToast("發佈成功！"); setTimeout(() => location.reload(), 1500);
             },
             renderList: (games) => {
                 const container = $('main-content');
                 if(games.length===0) { container.innerHTML = `<p class="section-title text-center py-20">No active events</p>`; return; }
                 container.innerHTML = games.map(g => {
-                    if(!g.approved && user?.role !== 'super' && user?.name !== g.createdBy) return '';
-                    return `<div onclick="vflow.goToGame('${g.id}')" class="premium-card p-8 watermark-bg"><div class="relative z-10 flex justify-between items-start mb-10">${vflow.formatTimeDisplay(g.time)}<span class="text-[8px] font-bold text-gray-300">@${g.createdBy.toUpperCase()}</span></div><h3 class="relative z-10 text-2xl font-extrabold tracking-tight mb-8 uppercase">${g.location}</h3>${(user?.role==='super'||user?.name===g.createdBy) ? `<div class="relative z-10 flex gap-4 border-t border-gray-100 pt-6 mt-4">${(user?.role==='super' && !g.approved) ? `<button onclick="event.stopPropagation();vflow.approveGame('${g.id}', '${g.location}')" class="text-[10px] font-extrabold text-emerald-500">APPROVE</button>` : ''}<button onclick="event.stopPropagation();vflow.generateStory('${g.location}', '${g.time}', ${g.maxPlayers}, ${g.price}, '${g.createdBy}')" class="text-[10px] font-extrabold">STORY</button><button onclick="event.stopPropagation();vflow.delGame('${g.id}')" class="text-[10px] font-extrabold text-red-300">DELETE</button></div>` : ''}</div>`;
+                    const isCreator = user?.id === g.createdById;
+                    if(!g.approved && user?.role !== 'super' && !isCreator) return '';
+                    return `<div onclick="vflow.goToGame('${g.id}')" class="premium-card p-8 watermark-bg"><div class="relative z-10 flex justify-between items-start mb-10">${vflow.formatTimeDisplay(g.time)}<span class="text-[8px] font-bold text-gray-300">@${g.createdBy.toUpperCase()}</span></div><h3 class="relative z-10 text-2xl font-extrabold tracking-tight mb-8 uppercase">${g.location}</h3>${(user?.role==='super' || isCreator) ? `<div class="relative z-10 flex gap-4 border-t border-gray-100 pt-6 mt-4">${(user?.role==='super' && !g.approved) ? `<button onclick="event.stopPropagation();vflow.approveGame('${g.id}', '${g.location}')" class="text-[10px] font-extrabold text-emerald-500">APPROVE</button>` : ''}<button onclick="event.stopPropagation();vflow.generateStory('${g.location}', '${g.time}', ${g.maxPlayers}, ${g.price}, '${g.createdBy}')" class="text-[10px] font-extrabold">STORY</button><button onclick="event.stopPropagation();vflow.delGame('${g.id}')" class="text-[10px] font-extrabold text-red-300">DELETE</button></div>` : ''}</div>`;
                 }).join('');
             },
             goToGame: (id) => {
                 currentView = 'detail'; selectedPositions = [];
                 onSnapshot(doc(db, "games", id), (d) => {
-                    if(!d.exists()) return; const g = d.data(); const isMgr = user?.role==='super'||user?.name===g.createdBy; tempJoinData = { ...tempJoinData, location: g.location };
-                    $('main-content').innerHTML = `<button onclick="location.reload()" class="section-title mb-10 flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> Gallery</button><h2 class="text-4xl font-extrabold tracking-tighter mb-4 uppercase">${g.location}</h2><div class="flex justify-between mb-12">${vflow.formatTimeDisplay(g.time)}<span id="p-count" class="text-xs font-bold">0 / ${g.maxPlayers}</span></div><div class="premium-card p-8 mb-12 watermark-bg"><div class="relative z-10"><input id="nickname" type="text" placeholder="NICKNAME" class="input-flat mb-4"><input id="ig" type="text" placeholder="IG (必須有@)" class="input-flat mb-8"><div class="space-y-2 mb-8">${['Setter (二傳)','Outside Hitter (大搥)','Middle Blocker (快攻)','Opposite (接應)','Libero (自由人)'].map(p=>`<button data-pos="${p}" onclick="vflow.setPos('${p}')" class="pos-btn btn-outline w-full py-4 text-[10px] uppercase bg-white">${p}</button>`).join('')}</div><button onclick="vflow.prepJoin('${id}', ${g.price}, '${g.createdBy}')" class="w-full btn-black py-5 uppercase text-xs">Join $${g.price}</button></div></div><div id="player-list" class="space-y-4 pb-20"></div>`;
+                    if(!d.exists()) return; const g = d.data(); const isMgr = user?.role==='super' || user?.id===g.createdById; tempJoinData = { ...tempJoinData, location: g.location };
+                    $('main-content').innerHTML = `<button onclick="location.reload()" class="section-title mb-10 flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> Gallery</button><h2 class="text-4xl font-extrabold tracking-tighter mb-4 uppercase">${g.location}</h2><div class="flex justify-between mb-12">${vflow.formatTimeDisplay(g.time)}<span id="p-count" class="text-xs font-bold">0 / ${g.maxPlayers}</span></div><div class="premium-card p-8 mb-12 watermark-bg"><div class="relative z-10"><input id="nickname" type="text" placeholder="NICKNAME" class="input-flat mb-4"><input id="ig" type="text" placeholder="IG (必須有@)" class="input-flat mb-8"><div class="space-y-2 mb-8">${['Setter (二傳)','Outside Hitter (大搥)','Middle Blocker (快攻)','Opposite (接應)','Libero (自由人)'].map(p=>`<button data-pos="${p}" onclick="vflow.setPos('${p}')" class="pos-btn btn-outline w-full py-4 text-[10px] uppercase bg-white">${p}</button>`).join('')}</div><button onclick="vflow.prepJoin('${id}', ${g.price}, '${g.createdById}', '${g.createdBy}')" class="w-full btn-black py-5 uppercase text-xs">Join $${g.price}</button></div></div><div id="player-list" class="space-y-4 pb-20"></div>`;
                     vflow.listenPlayers(id, isMgr, g.maxPlayers);
                 });
             },
@@ -197,13 +220,15 @@
                 $('tab-payme').className = isP ? 'text-[10px] font-extrabold border-b-2 border-black pb-1 relative z-10' : 'text-[10px] font-extrabold text-gray-300 pb-1 relative z-10';
                 $('tab-alipay').className = !isP ? 'text-[10px] font-extrabold border-b-2 border-black pb-1 relative z-10' : 'text-[10px] font-extrabold text-gray-300 pb-1 relative z-10';
             },
-            previewReceipt: (input) => {
-                if(input.files && input.files[0]) { $('receipt_placeholder').classList.add('hidden'); const thumb = $('receipt_thumbnail'); thumb.src = URL.createObjectURL(input.files[0]); thumb.classList.remove('hidden'); $('btn-submit-reg').classList.remove('opacity-30','pointer-events-none'); }
-            },
-            prepJoin: async (gid, pr, org) => {
+            prepJoin: async (gid, pr, creatorId, orgName) => {
                 const ig = $('ig').value.trim(); const nick = $('nickname').value.trim();
                 if(!nick || !ig.startsWith('@') || selectedPositions.length===0) { vflow.showToast("資料錯誤", true); return; }
-                const adminDoc = await getDoc(doc(db, "admins", org)); const orgData = adminDoc.data() || {};
+                
+                let orgData = {};
+                if(creatorId && creatorId !== 'super_admin') {
+                    const adminDoc = await getDoc(doc(db, "admins", creatorId)); 
+                    if(adminDoc.exists()) orgData = adminDoc.data();
+                }
                 
                 $('content-payme').innerHTML = orgData.payUrl ? 
                     `<div class="p-4 bg-red-50 rounded-lg border border-red-100"><p class="text-[10px] text-red-800 mb-3 font-bold tracking-widest">點擊下方按鈕跳轉至 PayMe</p><a href="${orgData.payUrl}" target="_blank" class="flex items-center justify-center w-full bg-[#E02443] text-white rounded-lg py-4 text-xs font-bold shadow-md active:scale-95 transition relative z-10"><i class="fa-solid fa-link mr-2"></i> 撳呢度用 PayMe 俾錢</a></div>` : 
@@ -213,7 +238,7 @@
                     `<div class="p-4 bg-blue-50 rounded-lg border border-blue-100"><p class="text-[10px] text-blue-800 mb-3 font-bold tracking-widest">請儲存或掃描下方 QR Code 付款</p><img src="${orgData.payImg}" class="w-48 mx-auto rounded-lg shadow-sm relative z-10 border border-blue-200"></div>` : 
                     '<p class="text-xs text-gray-400 py-4">管理員未設定 Alipay QR Code</p>';
                 
-                $('sheet-price').innerText = `$${pr}`; tempJoinData = { ...tempJoinData, gid, ig, nickname: nick, pos: selectedPositions.join(' & '), org }; vflow.openSheet();
+                $('sheet-price').innerText = `$${pr}`; tempJoinData = { ...tempJoinData, gid, ig, nickname: nick, pos: selectedPositions.join(' & '), org: orgName }; vflow.openSheet();
             },
             executeJoin: async () => {
                 const file = $('receipt_input').files[0]; if(!file) return;
@@ -233,20 +258,48 @@
             viewReceipt: (b64) => { $('receipt_display_img').src = b64; $('receipt_modal').classList.remove('hidden'); },
             addAdminAccount: async () => { 
                 const u = $('new_admin_u').value.trim(); const p = $('new_admin_p').value.trim(); 
-                if(!u || !p) return; await setDoc(doc(db, "admins", u), { username:u, password:p, role:'organizer' }); 
+                if(!u || !p) return; 
+                // 安全更新：密碼經過 SHA-256 處理，且使用 Firebase 自動生成 ID (addDoc)
+                const hashedP = await vflow.hashPassword(p);
+                await addDoc(collection(db, "admins"), { username:u, password:hashedP, role:'organizer' }); 
                 vflow.showToast(`管理員 ${u} 已新增`); $('new_admin_u').value = ''; $('new_admin_p').value = '';
             },
             updateMyProfile: async () => {
                 const newU = $('edit_my_u').value.trim(); const newP = $('edit_my_p').value.trim();
-                if(!newU && !newP) return; const oldDocRef = doc(db, "admins", user.name); const oldDocSnap = await getDoc(oldDocRef); const data = oldDocSnap.data() || { username: user.name, role: user.role };
+                if(!newU && !newP) return; 
+                if(user.id === 'super_admin') { vflow.showToast("系統預設管理員無法在此修改資料", true); return; }
+                
+                const adminRef = doc(db, "admins", user.id); 
+                const updates = {};
+                
                 if(newU && newU !== user.name) {
-                    const check = await getDoc(doc(db, "admins", newU)); if(check.exists()) { vflow.showToast("用戶名已被使用", true); return; }
-                    const newData = { ...data, username: newU }; if(newP) newData.password = newP;
-                    await setDoc(doc(db, "admins", newU), newData); if (oldDocSnap.exists()) await deleteDoc(oldDocRef);
-                    user.name = newU; sessionStorage.setItem('vf_user', JSON.stringify(user)); vflow.showToast("帳戶資料更新成功！"); setTimeout(()=>location.reload(), 1000);
-                } else if (newP) { await setDoc(oldDocRef, { password: newP, username: user.name }, { merge: true }); vflow.showToast("密碼已更新！"); $('edit_my_p').value = ''; }
+                    const snap = await getDocs(query(collection(db, "admins"), where("username", "==", newU)));
+                    if(!snap.empty) { vflow.showToast("用戶名已被使用", true); return; }
+                    updates.username = newU;
+                }
+                if(newP) {
+                    updates.password = await vflow.hashPassword(newP);
+                }
+                
+                // 安全更新：直接更新目前 ID 的文檔，而不是刪除舊文檔建新文檔
+                await updateDoc(adminRef, updates);
+                
+                if(updates.username) {
+                    user.name = updates.username;
+                    sessionStorage.setItem('vf_user', JSON.stringify(user));
+                }
+                
+                vflow.showToast("資料更新成功！"); 
+                $('edit_my_p').value = ''; $('edit_my_u').value = '';
+                if(updates.username) setTimeout(()=>location.reload(), 1000);
             },
-            updateAdminPass: async (id) => { const newP = $(`admin_p_${id}`).value.trim(); if(!newP) return; await setDoc(doc(db, "admins", id), { password: newP }, { merge: true }); vflow.showToast(`已更新 ${id} 的密碼`); }
+            updateAdminPass: async (id) => { 
+                const newP = $(`admin_p_${id}`).value.trim(); if(!newP) return; 
+                const hashedP = await vflow.hashPassword(newP);
+                await updateDoc(doc(db, "admins", id), { password: hashedP }); 
+                vflow.showToast(`已成功更新密碼`); 
+                $(`admin_p_${id}`).value = '';
+            }
         };
 
         if (user) { 
@@ -255,11 +308,12 @@
                 $('super-admin-tools').classList.remove('hidden');
                 onSnapshot(collection(db, "admins"), (snap) => {
                     const list = []; snap.forEach(d => list.push({id: d.id, ...d.data()}));
-                    $('admin-list-container').innerHTML = `<p class="mb-2 text-gray-300 text-[10px] font-bold">ADMIN LIST:</p>` + list.map(a => `<div class="flex flex-col bg-white p-4 rounded-lg mb-3 border border-gray-100 shadow-sm relative z-10"><div class="flex justify-between items-center mb-3"><span class="font-extrabold text-sm tracking-tight text-indigo-600">@${a.username.toUpperCase()}</span><button onclick="vflow.delAdmin('${a.id}')" class="text-red-500 font-extrabold px-3 py-1 bg-red-50 rounded text-[10px] hover:bg-red-500 hover:text-white transition">DELETE</button></div><div class="flex gap-2"><input id="admin_p_${a.id}" type="text" value="${a.password || ''}" placeholder="PASSWORD" class="input-flat !p-2 text-[10px] flex-1 font-mono bg-gray-50"><button onclick="vflow.updateAdminPass('${a.id}')" class="btn-black px-4 text-[10px]">SAVE PW</button></div></div>`).join('');
+                    // 管理員列表現在不會顯示密碼，因為已經是被加密過無法反解的 Hash 碼
+                    $('admin-list-container').innerHTML = `<p class="mb-2 text-gray-300 text-[10px] font-bold">ADMIN LIST:</p>` + list.map(a => `<div class="flex flex-col bg-white p-4 rounded-lg mb-3 border border-gray-100 shadow-sm relative z-10"><div class="flex justify-between items-center mb-3"><span class="font-extrabold text-sm tracking-tight text-indigo-600">@${a.username.toUpperCase()}</span><button onclick="vflow.delAdmin('${a.id}')" class="text-red-500 font-extrabold px-3 py-1 bg-red-50 rounded text-[10px] hover:bg-red-500 hover:text-white transition">DELETE</button></div><div class="flex gap-2"><input id="admin_p_${a.id}" type="password" placeholder="NEW PASSWORD" class="input-flat !p-2 text-[10px] flex-1 bg-gray-50"><button onclick="vflow.updateAdminPass('${a.id}')" class="btn-black px-4 text-[10px]">SAVE PW</button></div></div>`).join('');
                 });
             }
         }
-        vflow.delAdmin = async (name) => { if(confirm(`確定要刪除管理員 ${name} 嗎？此操作無法還原。`)) { await deleteDoc(doc(db, "admins", name)); vflow.showToast("已成功刪除"); } };
+        vflow.delAdmin = async (id) => { if(confirm(`確定要刪除該管理員嗎？此操作無法還原。`)) { await deleteDoc(doc(db, "admins", id)); vflow.showToast("已成功刪除"); } };
         onSnapshot(query(collection(db, "games"), orderBy("timestamp", "desc")), (snap) => { const games=[]; snap.forEach(d=>games.push({id:d.id, ...d.data()})); if(currentView==='list') vflow.renderList(games); });
     </script>
 </body>
