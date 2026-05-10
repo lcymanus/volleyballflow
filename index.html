@@ -71,7 +71,7 @@
                     <input id="new_loc" type="text" placeholder="體育館名稱" class="input-flat">
                     <div class="grid grid-cols-2 gap-4">
                         <div class="date-input-container"><input id="new_date" type="date" required placeholder="SELECT DATE" class="input-flat text-xs"><i class="fa-regular fa-calendar"></i></div>
-                        <div class="flex gap-1"><input id="start_time" type="time" value="19:00" class="input-flat !p-2 text-xs"><input id="end_time" type="time" value="21:00" class="input-flat !p-2 text-xs"></div>
+                        <div class="flex gap-1"><input id="start_time" type="time" value="00:00" class="input-flat !p-2 text-xs"><input id="end_time" type="time" value="00:00" class="input-flat !p-2 text-xs"></div>
                     </div>
                     <textarea id="new_desc" placeholder="場地或規則描述..." class="input-flat h-20 resize-none"></textarea>
                     <div class="grid grid-cols-2 gap-4">
@@ -136,6 +136,12 @@
             compressImg: (file) => new Promise(resolve => { const r = new FileReader(); r.onload = e => { const img = new Image(); img.onload = () => { const cvs = document.createElement('canvas'); const max = 800; const scale = img.width > max ? max / img.width : 1; cvs.width = img.width * scale; cvs.height = img.height * scale; const ctx = cvs.getContext('2d'); ctx.drawImage(img, 0, 0, cvs.width, cvs.height); resolve(cvs.toDataURL('image/jpeg', 0.6)); }; img.src = e.target.result; }; r.readAsDataURL(file); }),
             clickSecret: () => { secretClicks++; if(secretClicks===4){ $('login_modal').classList.remove('hidden'); secretClicks=0; } setTimeout(()=>secretClicks=0, 3000); },
             closeLogin: () => { $('login_modal').classList.add('hidden'); },
+            formatTimeDisplay: (timeStr) => {
+                if(!timeStr) return '';
+                const parts = timeStr.split(') ');
+                if(parts.length === 2) return `<div class="text-[14px] font-extrabold text-indigo-600 tracking-wider"><span class="block">${parts[0]})</span><span class="block">${parts[1]}</span></div>`;
+                return `<div class="text-[14px] font-extrabold text-indigo-600 tracking-wider">${timeStr}</div>`;
+            },
             login: async () => {
                 const u = $('login_u').value.trim(); const p = $('login_p').value.trim();
                 if(u==="Manusyip" && p==="Manusyip0830") { sessionStorage.setItem('vf_user', JSON.stringify({name:u, role:'super'})); location.reload(); return; }
@@ -150,8 +156,9 @@
                 if(file) { const reader = new FileReader(); reader.onloadend = async () => { await setDoc(doc(db, "admins", user.name), { payImg: reader.result }, { merge: true }); vflow.showToast("更新成功！"); }; reader.readAsDataURL(file); } else vflow.showToast("更新成功！");
             },
             createGame: async () => { 
-                const loc = $('new_loc').value.trim(); const dateVal = $('new_date').value; 
+                let loc = $('new_loc').value.trim(); const dateVal = $('new_date').value; 
                 if(!loc || !dateVal) { vflow.showToast("請填妥資料", true); return; }
+                if(!loc.endsWith('體育館')) loc += '體育館';
                 const weekDay = ["日","一","二","三","四","五","六"][new Date(dateVal).getDay()];
                 const fullTime = `${dateVal} (${weekDay}) ${$('start_time').value} - ${$('end_time').value}`;
                 await addDoc(collection(db, "games"), { location: loc, time: fullTime, description: $('new_desc').value, maxPlayers: parseInt($('new_max').value), price: parseInt($('new_price').value), createdBy: user.name, approved: user.role === 'super', timestamp: serverTimestamp() });
@@ -162,14 +169,14 @@
                 if(games.length===0) { container.innerHTML = `<p class="section-title text-center py-20">No active events</p>`; return; }
                 container.innerHTML = games.map(g => {
                     if(!g.approved && user?.role !== 'super' && user?.name !== g.createdBy) return '';
-                    return `<div onclick="vflow.goToGame('${g.id}')" class="premium-card p-8 watermark-bg"><div class="relative z-10 flex justify-between items-start mb-10"><span class="section-title !text-indigo-600">${g.time}</span><span class="text-[8px] font-bold text-gray-300">@${g.createdBy.toUpperCase()}</span></div><h3 class="relative z-10 text-2xl font-extrabold tracking-tight mb-8 uppercase">${g.location}</h3>${(user?.role==='super'||user?.name===g.createdBy) ? `<div class="relative z-10 flex gap-4 border-t border-gray-100 pt-6 mt-4">${(user?.role==='super' && !g.approved) ? `<button onclick="event.stopPropagation();vflow.approveGame('${g.id}', '${g.location}')" class="text-[10px] font-extrabold text-emerald-500">APPROVE</button>` : ''}<button onclick="event.stopPropagation();vflow.generateStory('${g.location}', '${g.time}', ${g.maxPlayers}, ${g.price}, '${g.createdBy}')" class="text-[10px] font-extrabold">STORY</button><button onclick="event.stopPropagation();vflow.delGame('${g.id}')" class="text-[10px] font-extrabold text-red-300">DELETE</button></div>` : ''}</div>`;
+                    return `<div onclick="vflow.goToGame('${g.id}')" class="premium-card p-8 watermark-bg"><div class="relative z-10 flex justify-between items-start mb-10">${vflow.formatTimeDisplay(g.time)}<span class="text-[8px] font-bold text-gray-300">@${g.createdBy.toUpperCase()}</span></div><h3 class="relative z-10 text-2xl font-extrabold tracking-tight mb-8 uppercase">${g.location}</h3>${(user?.role==='super'||user?.name===g.createdBy) ? `<div class="relative z-10 flex gap-4 border-t border-gray-100 pt-6 mt-4">${(user?.role==='super' && !g.approved) ? `<button onclick="event.stopPropagation();vflow.approveGame('${g.id}', '${g.location}')" class="text-[10px] font-extrabold text-emerald-500">APPROVE</button>` : ''}<button onclick="event.stopPropagation();vflow.generateStory('${g.location}', '${g.time}', ${g.maxPlayers}, ${g.price}, '${g.createdBy}')" class="text-[10px] font-extrabold">STORY</button><button onclick="event.stopPropagation();vflow.delGame('${g.id}')" class="text-[10px] font-extrabold text-red-300">DELETE</button></div>` : ''}</div>`;
                 }).join('');
             },
             goToGame: (id) => {
                 currentView = 'detail'; selectedPositions = [];
                 onSnapshot(doc(db, "games", id), (d) => {
                     if(!d.exists()) return; const g = d.data(); const isMgr = user?.role==='super'||user?.name===g.createdBy; tempJoinData = { ...tempJoinData, location: g.location };
-                    $('main-content').innerHTML = `<button onclick="location.reload()" class="section-title mb-10 flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> Gallery</button><h2 class="text-4xl font-extrabold tracking-tighter mb-4 uppercase">${g.location}</h2><div class="flex justify-between mb-12"><span class="section-title !text-indigo-600">${g.time}</span><span id="p-count" class="text-xs font-bold">0 / ${g.maxPlayers}</span></div><div class="premium-card p-8 mb-12 watermark-bg"><div class="relative z-10"><input id="nickname" type="text" placeholder="NICKNAME" class="input-flat mb-4"><input id="ig" type="text" placeholder="IG (必須有@)" class="input-flat mb-8"><div class="space-y-2 mb-8">${['Setter (二傳)','Outside Hitter (大搥)','Middle Blocker (快攻)','Opposite (接應)','Libero (自由人)'].map(p=>`<button data-pos="${p}" onclick="vflow.setPos('${p}')" class="pos-btn btn-outline w-full py-4 text-[10px] uppercase bg-white">${p}</button>`).join('')}</div><button onclick="vflow.prepJoin('${id}', ${g.price}, '${g.createdBy}')" class="w-full btn-black py-5 uppercase text-xs">Join $${g.price}</button></div></div><div id="player-list" class="space-y-4 pb-20"></div>`;
+                    $('main-content').innerHTML = `<button onclick="location.reload()" class="section-title mb-10 flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> Gallery</button><h2 class="text-4xl font-extrabold tracking-tighter mb-4 uppercase">${g.location}</h2><div class="flex justify-between mb-12">${vflow.formatTimeDisplay(g.time)}<span id="p-count" class="text-xs font-bold">0 / ${g.maxPlayers}</span></div><div class="premium-card p-8 mb-12 watermark-bg"><div class="relative z-10"><input id="nickname" type="text" placeholder="NICKNAME" class="input-flat mb-4"><input id="ig" type="text" placeholder="IG (必須有@)" class="input-flat mb-8"><div class="space-y-2 mb-8">${['Setter (二傳)','Outside Hitter (大搥)','Middle Blocker (快攻)','Opposite (接應)','Libero (自由人)'].map(p=>`<button data-pos="${p}" onclick="vflow.setPos('${p}')" class="pos-btn btn-outline w-full py-4 text-[10px] uppercase bg-white">${p}</button>`).join('')}</div><button onclick="vflow.prepJoin('${id}', ${g.price}, '${g.createdBy}')" class="w-full btn-black py-5 uppercase text-xs">Join $${g.price}</button></div></div><div id="player-list" class="space-y-4 pb-20"></div>`;
                     vflow.listenPlayers(id, isMgr, g.maxPlayers);
                 });
             },
