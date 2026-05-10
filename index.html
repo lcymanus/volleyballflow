@@ -93,7 +93,7 @@
         <div id="main-content" class="space-y-8"></div>
         
         <div id="story_modal" class="hidden fixed inset-0 bg-black/90 flex items-center justify-center p-6 z-[2000]">
-            <div class="bg-white w-full max-w-sm rounded-lg overflow-hidden relative"><img id="story_preview" src="" class="w-full relative z-10"><div class="p-6 space-y-3 relative z-10"><a id="story_download_btn" href="#" download="story.png" class="block w-full btn-black text-center py-4 text-xs uppercase">Download</a><button onclick="$('story_modal').classList.add('hidden')" class="w-full text-gray-400 font-bold text-[10px] uppercase">Close</button></div></div>
+            <div class="bg-white w-full max-w-sm rounded-lg overflow-hidden relative"><img id="story_preview" src="" class="w-full relative z-10"><div class="p-6 space-y-3 relative z-10"><a id="story_download_btn" href="#" download="story.png" class="block w-full btn-black text-center py-4 text-xs uppercase">Download</a><button onclick="vflow.closeStory()" class="w-full text-gray-400 font-bold text-[10px] uppercase">Close</button></div></div>
         </div>
 
         <div id="login_modal" class="hidden fixed inset-0 bg-white flex items-center justify-center p-10 z-[3000]">
@@ -128,7 +128,8 @@
 
         const $ = id => document.getElementById(id);
         let user = JSON.parse(sessionStorage.getItem('vf_user')); 
-        let currentView = 'list'; let selectedPositions = []; let secretClicks = 0; let tempJoinData = null;
+        // 修正 tempJoinData 預設值為空物件，避免解構賦值時出問題
+        let currentView = 'list'; let selectedPositions = []; let secretClicks = 0; let tempJoinData = {};
 
         window.vflow = {
             // --- 安全更新：加入 SHA-256 密碼雜湊功能 ---
@@ -143,6 +144,8 @@
             compressImg: (file) => new Promise(resolve => { const r = new FileReader(); r.onload = e => { const img = new Image(); img.onload = () => { const cvs = document.createElement('canvas'); const max = 800; const scale = img.width > max ? max / img.width : 1; cvs.width = img.width * scale; cvs.height = img.height * scale; const ctx = cvs.getContext('2d'); ctx.drawImage(img, 0, 0, cvs.width, cvs.height); resolve(cvs.toDataURL('image/jpeg', 0.6)); }; img.src = e.target.result; }; r.readAsDataURL(file); }),
             clickSecret: () => { secretClicks++; if(secretClicks===4){ $('login_modal').classList.remove('hidden'); secretClicks=0; } setTimeout(()=>secretClicks=0, 3000); },
             closeLogin: () => { $('login_modal').classList.add('hidden'); },
+            // 修正：新增關閉 Story 功能
+            closeStory: () => { $('story_modal').classList.add('hidden'); },
             formatTimeDisplay: (timeStr) => {
                 if(!timeStr) return '';
                 const parts = timeStr.split(') ');
@@ -239,6 +242,25 @@
                     '<p class="text-xs text-gray-400 py-4">管理員未設定 Alipay QR Code</p>';
                 
                 $('sheet-price').innerText = `$${pr}`; tempJoinData = { ...tempJoinData, gid, ig, nickname: nick, pos: selectedPositions.join(' & '), org: orgName }; vflow.openSheet();
+            },
+            // 修正：新增預覽截圖並解鎖送出按鈕
+            previewReceipt: (input) => {
+                const file = input.files[0];
+                if(file) {
+                    const reader = new FileReader();
+                    reader.onload = e => {
+                        $('receipt_thumbnail').src = e.target.result;
+                        $('receipt_thumbnail').classList.remove('hidden');
+                        $('receipt_placeholder').classList.add('hidden');
+                        $('btn-submit-reg').classList.remove('opacity-30', 'pointer-events-none');
+                    };
+                    reader.readAsDataURL(file);
+                } else {
+                    $('receipt_thumbnail').src = '';
+                    $('receipt_thumbnail').classList.add('hidden');
+                    $('receipt_placeholder').classList.remove('hidden');
+                    $('btn-submit-reg').classList.add('opacity-30', 'pointer-events-none');
+                }
             },
             executeJoin: async () => {
                 const file = $('receipt_input').files[0]; if(!file) return;
