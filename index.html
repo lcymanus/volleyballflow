@@ -161,7 +161,7 @@ input[type="date"]:focus::before,input[type="date"]:valid::before{display:none}
         </div>
         <div id="content-payme" class="mb-10 text-center"></div>
         <div id="content-alipay" class="hidden mb-10 text-center"></div>
-        <div class="space-y-6">
+        <div class="space-y-4">
             <div>
                 <label class="section-title block mb-3">Receipt Screenshot</label>
                 <div class="border border-dashed border-gray-200 rounded-lg p-8 text-center relative hover:bg-gray-50 cursor-pointer bg-white/80 backdrop-blur">
@@ -173,8 +173,16 @@ input[type="date"]:focus::before,input[type="date"]:valid::before{display:none}
                     <img id="receipt_thumbnail" src="" class="hidden h-32 mx-auto rounded relative z-10 object-contain">
                 </div>
             </div>
-            <button id="btn-submit-reg" onclick="vflow.executeJoin()" class="w-full btn-black py-4 uppercase text-xs opacity-30 pointer-events-none">Confirm Submission</button>
-            <button onclick="vflow.closeSheet()" class="w-full text-gray-300 text-[10px] uppercase font-bold">Cancel</button>
+            
+            <div class="mb-4 mt-2 p-3 bg-gray-50 border border-gray-100 rounded-lg">
+                <p class="text-[10px] text-gray-700 font-bold mb-1"><i class="fa-solid fa-shield-halved mr-1"></i> 免責聲明</p>
+                <p class="text-[9px] text-gray-500 leading-relaxed">
+                    參與此活動純屬自願性質。參加者須自行承擔一切個人安全及財物風險。如在活動期間發生任何意外受傷、事故或財物損失，本平台及相關活動組織人員概不負責。
+                </p>
+            </div>
+
+            <button id="btn-submit-reg" onclick="vflow.executeJoin()" class="w-full btn-black py-4 uppercase text-xs opacity-30 pointer-events-none mt-2">Confirm Submission</button>
+            <button onclick="vflow.closeSheet()" class="w-full text-gray-300 text-[10px] uppercase font-bold mt-4">Cancel</button>
         </div>
     </div>
 </div>
@@ -295,7 +303,6 @@ window.vflow={
     
     goToGame:(id)=>{currentView='detail';selectedPositions=[];onSnapshot(doc(db,"games",id),async(d)=>{if(!d.exists())return;const g=d.data();const isMgr=user?.role==='super'||user?.id===g.createdById;tempJoinData={...tempJoinData,location:g.location};$('main-content').innerHTML=`<button onclick="location.reload()" class="section-title mb-10 flex items-center gap-2"><i class="fa-solid fa-arrow-left"></i> Gallery</button><h2 class="text-4xl font-extrabold tracking-tighter mb-4 uppercase">${g.location}</h2><div class="flex justify-between mb-8">${vflow.formatTimeDisplay(g.time)}<span id="p-count" class="text-xs font-bold">0 / ${g.maxPlayers}</span></div>${g.description?`<div class="mb-10 p-4 border-l-2 border-indigo-600 bg-gray-50/60 rounded-r-lg"><p class="section-title !text-[9px] mb-1.5">Event Description</p><p class="text-xs text-gray-600 leading-relaxed whitespace-pre-line">${g.description}</p></div>`:''}<div class="premium-card p-8 mb-12 watermark-bg"><div class="relative z-10"><input id="nickname" type="text" placeholder="NICKNAME" class="input-flat mb-4"><input id="ig" type="text" placeholder="IG (必須有@)" class="input-flat mb-8"><div class="space-y-2 mb-8">${['Setter (二傳)','Outside Hitter (大搥)','Middle Blocker (快攻)','Opposite (接應)','Libero (自由人)'].map(p=>`<button data-pos="${p}" onclick="vflow.setPos('${p}')" class="pos-btn btn-outline w-full py-4 text-[10px] uppercase bg-white">${p}</button>`).join('')}</div><button onclick="vflow.prepJoin('${id}', ${g.price}, '${g.createdById}', '${g.createdBy}')" class="w-full btn-black py-5 uppercase text-xs">Join $${g.price}</button></div></div><div id="player-list" class="space-y-4 pb-20"></div>`;vflow.listenPlayers(id,isMgr,g.maxPlayers);});},
     
-    // 已修復：依家管理員列表會正確顯示球員嘅 ${p.ig}
     listenPlayers:(gid,isMgr,max)=>{onSnapshot(query(collection(db,`games/${gid}/players`),orderBy("timestamp","asc")),(snap)=>{const players=[];snap.forEach(d=>players.push({id:d.id,...d.data()}));if($('p-count'))$('p-count').innerText=`${players.length} / ${max}`;if(isMgr)$('player-list').innerHTML=players.map((p,i)=>`<div class="premium-card p-5 flex justify-between items-center"><div><p class="text-sm font-extrabold">${i+1}. ${p.nickname} <span class="text-indigo-500 font-medium text-xs ml-1">${p.ig||''}</span></p><p class="text-[8px] ${p.status === 'confirmed' ? 'text-emerald-500 font-bold' : 'text-gray-400'} uppercase">${p.pos} | ${p.status}</p></div><div class="flex gap-4">${p.status === 'confirmed' ? '<span class="text-emerald-500 font-bold text-[10px] my-auto">已核實</span>' : `<button onclick="vflow.confirmP('${gid}','${p.id}','${p.nickname}')" class="text-emerald-500 font-bold text-[10px]">OK</button>`}<button onclick="vflow.delP('${gid}','${p.id}')" class="text-red-300 font-bold text-[10px]">DEL</button>${p.receipt?`<button onclick="vflow.viewReceipt('${p.receipt}')" class="font-bold text-[10px]">REC</button>`:''}</div></div>`).join('');else $('player-list').innerHTML=`<p class="section-title text-center py-10">Private List</p>`;});},
     
     setPos:(p)=>{const idx=selectedPositions.indexOf(p);if(idx>-1)selectedPositions.splice(idx,1);else{if(selectedPositions.length>=2)return;selectedPositions.push(p);}document.querySelectorAll('.pos-btn').forEach(btn=>btn.classList.toggle('selected',selectedPositions.includes(btn.getAttribute('data-pos'))));},
@@ -308,8 +315,8 @@ window.vflow={
         if(!nick||!ig.startsWith('@')||selectedPositions.length===0){vflow.showToast("資料錯誤或未選位置",true);return;}
         let orgData={};
         if(creatorId==='super_admin'){const globalDoc=await getDoc(doc(db,"global_settings","payment"));if(globalDoc.exists()) orgData=globalDoc.data();} else if(creatorId){const adminDoc=await getDoc(doc(db,"admins",creatorId));if(adminDoc.exists()) orgData=adminDoc.data();}
-        $('content-payme').innerHTML=orgData.payUrl?`<div class="p-4 bg-red-50 rounded-lg border border-red-100"><p class="text-[10px] text-red-800 mb-3 font-bold tracking-widest">點擊下方按鈕跳轉至 PayMe</p><a href="${orgData.payUrl}" target="_blank" class="flex items-center justify-center w-full bg-[#E02443] text-white rounded-lg py-4 text-xs font-bold shadow-md active:scale-95 transition relative z-10"><i class="fa-solid fa-link mr-2"></i> 撳呢度用 PayMe 俾錢</a></div>`:'<p class="text-xs text-gray-400 py-4">管理員未設定 PayMe 連結</p>';
-        $('content-alipay').innerHTML=orgData.payImg?`<div class="p-4 bg-blue-50 rounded-lg border border-blue-100"><p class="text-[10px] text-blue-800 mb-3 font-bold tracking-widest">請儲存或掃描下方 QR Code 付款</p><img src="${orgData.payImg}" class="w-48 mx-auto rounded-lg shadow-sm relative z-10 border border-blue-200"></div>`:'<p class="text-xs text-gray-400 py-4">管理員未設定 Alipay QR Code</p>';
+        $('content-payme').innerHTML=orgData.payUrl?`<div class="p-4 bg-red-50 rounded-lg border border-red-100"><p class="text-[10px] text-red-800 mb-3 font-bold tracking-widest">點擊下方按鈕跳轉至 PayMe</p><a href="${orgData.payUrl}" target="_blank" class="flex items-center justify-center w-full bg-[#E02443] text-white rounded-lg py-4 text-xs font-bold shadow-md active:scale-95 transition relative z-10"><i class="fa-solid fa-link mr-2"></i> 撳呢度用 PayMe 俾錢</a></div>`:'<p class="text-xs text-gray-400 py-4">未設定 PayMe 連結</p>';
+        $('content-alipay').innerHTML=orgData.payImg?`<div class="p-4 bg-blue-50 rounded-lg border border-blue-100"><p class="text-[10px] text-blue-800 mb-3 font-bold tracking-widest">請儲存或掃描下方 QR Code 付款</p><img src="${orgData.payImg}" class="w-48 mx-auto rounded-lg shadow-sm relative z-10 border border-blue-200"></div>`:'<p class="text-xs text-gray-400 py-4">未設定 Alipay QR Code</p>';
         $('sheet-price').innerText=`$${pr}`;
         tempJoinData={...tempJoinData,gid,ig,nickname:nick,pos:selectedPositions.join(' & '),org:orgName};
         vflow.openSheet();
@@ -338,6 +345,7 @@ window.vflow={
         }
     },
 
+    // 此處已完全刪除「管理員」名詞，改為「有人」聯絡
     executeJoin:async()=>{
         const file=$('receipt_input').files[0];
         if(!file)return;
@@ -349,9 +357,11 @@ window.vflow={
         try {
             const base64Img=await vflow.compressImg(file);
             await addDoc(collection(db,`games/${tempJoinData.gid}/players`),{...tempJoinData,status:"pending",receipt:base64Img,timestamp:serverTimestamp()});
-            vflow.sendTG(`🔔 <b>新報名</b>\n場地：${tempJoinData.location}\n球員：${tempJoinData.nickname}\n管理員：@${tempJoinData.org}`);
-            vflow.showToast("報名成功！");
-            setTimeout(()=>location.reload(),2000);
+            vflow.sendTG(`🔔 <b>新報名</b>\n場地：${tempJoinData.location}\n球員：${tempJoinData.nickname}\n主辦：@${tempJoinData.org}`);
+            
+            // 提交完成後的自定義彈出視窗
+            alert("✅ 報名記錄已成功提交！\n\n請留意：稍後會有人聯絡您確認是否成功留位，請耐心等候。");
+            location.reload();
         } catch(e) {
             vflow.showToast("上傳失敗，請重試", true);
             btn.disabled = false;
