@@ -3,11 +3,10 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>VolleyballFlow 控制總台 | 系統管理</title>
-
+<title>VolleyballFlow | 後台管理系統</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@400;600;700;800&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Urbanist:wght@300;400;600;700;800&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
@@ -16,7 +15,7 @@ body {
     color: #0f172a;
     font-family: 'Urbanist', sans-serif;
 }
-.premium-card {
+.admin-card {
     background: #ffffff;
     border: 1px solid #e2e8f0;
     border-radius: 16px;
@@ -33,383 +32,187 @@ body {
     justify-content: center;
 }
 .btn-black:hover { background: #1e293b; }
-.btn-outline {
-    border: 1px solid #e2e8f0;
-    border-radius: 12px;
-    font-weight: 600;
-    background: #ffffff;
-    transition: all 0.2s ease;
-}
-.btn-outline:hover { border-color: #0f172a; background: #f8fafc; }
+.btn-black:disabled { opacity: 0.4; pointer-events: none; background: #64748b; }
 .input-flat {
     width: 100%;
     border: 1px solid #e2e8f0;
-    padding: 12px 14px;
+    padding: 14px 16px;
     border-radius: 12px;
     font-size: 14px;
     outline: none;
-    background: #f1f5f9;
+    transition: all 0.2s ease;
+    background: #f8fafc;
 }
-.input-flat:focus { border-color: #0f172a; background: #ffffff; }
-#toast {
-    position: fixed;
-    top: 24px;
-    left: 50%;
-    transform: translateX(-50%) translateY(-120px);
-    background: #0f172a;
-    color: #ffffff;
-    padding: 14px 28px;
-    border-radius: 50px;
-    z-index: 7000;
-    transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-}
-#toast.show { transform: translateX(-50%) translateY(0); }
-.section-title {
-    font-size: 11px;
-    font-weight: 800;
-    text-transform: uppercase;
-    letter-spacing: 2.5px;
-    color: #64748b;
+.input-flat:focus {
+    border-color: #6366f1;
+    background: #ffffff;
+    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
 }
 </style>
 </head>
 <body class="p-4 md:p-8">
-<div id="toast">MESSAGE</div>
 
-<div id="login_block" class="fixed inset-0 bg-slate-900 flex items-center justify-center p-6 z-[6000]">
-    <div class="bg-white p-8 rounded-2xl w-full max-w-sm space-y-6 shadow-2xl">
-        <div class="text-center">
-            <h3 class="text-3xl font-extrabold tracking-tighter text-slate-900">VF PANEL</h3>
-            <p class="section-title mt-1">Authorized Personnel Only</p>
-        </div>
-        <div class="space-y-3">
-            <input id="login_u" type="text" placeholder="ADMIN ID" class="input-flat">
-            <input id="login_p" type="password" placeholder="PASSWORD / TOTP" class="input-flat">
-        </div>
-        <button onclick="vflow.login()" class="w-full btn-black py-4 uppercase text-xs font-bold tracking-wider">Verify Identity</button>
-    </div>
-</div>
-
-<div id="admin_dashboard" class="hidden max-w-7xl mx-auto w-full">
-    <header class="mb-8 flex justify-between items-end border-b border-slate-200 pb-6">
-        <div>
-            <h1 class="text-3xl font-extrabold tracking-tighter">VOLLEYFLOW <span class="text-indigo-600 text-sm font-bold tracking-widest block md:inline md:ml-2">MANAGEMENT GATEWAY</span></h1>
-        </div>
-        <div id="admin-status" class="flex items-center gap-2"></div>
+<div class="max-w-xl mx-auto w-full">
+    <header class="mb-8 mt-4 border-b border-slate-200 pb-6">
+        <h1 class="text-2xl font-extrabold tracking-tighter">
+            VOLLEYBALLFLOW <span class="text-indigo-600">管理後台</span>
+        </h1>
+        <p class="text-xs font-bold text-slate-400 tracking-widest uppercase mt-1">Payment & Global Settings</p>
     </header>
 
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
-        <div id="super-admin-tools" class="hidden premium-card p-6 border-dashed border-red-200 flex flex-col justify-between">
-            <div>
-                <h3 class="section-title text-red-500 mb-4"><i class="fa-solid fa-screwdriver-wrench mr-1"></i> System Master Control</h3>
-                <div class="flex gap-2 mb-4">
-                    <input id="new_admin_u" type="text" placeholder="ID" class="input-flat text-xs">
-                    <input id="new_admin_p" type="text" placeholder="PW" class="input-flat text-xs">
-                    <button onclick="vflow.addAdminAccount()" class="btn-black px-4 text-[11px] shrink-0">ADD</button>
-                </div>
-            </div>
-            <div id="admin-list-container" class="space-y-2 pt-4 border-t border-red-50 max-h-48 overflow-y-auto"></div>
-        </div>
-        
-        <div class="premium-card p-6 flex flex-col justify-between">
-            <div>
-                <h3 class="section-title mb-4"><i class="fa-solid fa-user-gear mr-1"></i> Organizer Settings</h3>
-                <div class="space-y-3">
-                    <div class="grid grid-cols-2 gap-3 mb-3">
-                        <input id="edit_my_u" type="text" placeholder="更改新帳號" class="input-flat text-xs">
-                        <input id="edit_my_p" type="password" placeholder="更改新密碼" class="input-flat text-xs">
-                    </div>
-                    <button onclick="vflow.updateMyProfile()" class="w-full btn-outline py-2 text-xs uppercase font-bold mb-4">更新登入憑證</button>
-                    
-                    <div class="pt-3 border-t border-slate-100">
-                        <p class="section-title mb-2">收款綁定 (PayMe/Alipay)</p>
-                        <input id="pay_url_input" type="text" placeholder="PayMe 網址連結" class="input-flat text-xs mb-2">
-                        <div class="flex items-center justify-between bg-slate-50 p-2 rounded-lg border">
-                            <input id="pay_img_input" type="file" accept="image/*" class="text-[10px] w-full">
-                            <button onclick="vflow.updatePaySettings()" class="text-[10px] font-bold text-indigo-600 underline shrink-0">變更設定</button>
-                        </div>
-                    </div>
-                </div>
-            </div>
+    <div class="admin-card p-6 space-y-6">
+        <div class="border-b border-slate-100 pb-3">
+            <h2 class="text-lg font-bold tracking-tight text-slate-800"><i class="fa-solid fa-wallet mr-2 text-indigo-500"></i>收款設定變更</h2>
+            <p class="text-xs text-slate-400 mt-0.5">此設定會直接連動前台報名時的 PayMe 與 Alipay 顯示</p>
         </div>
 
-        <div class="premium-card p-6">
-            <h3 class="section-title mb-4"><i class="fa-solid fa-calendar-plus mr-1"></i> Create New Volleyball Event</h3>
-            <div class="space-y-3">
-                <input id="new_loc" type="text" placeholder="體育館名稱 (例如：長沙灣)" class="input-flat text-xs">
-                <div class="grid grid-cols-2 gap-2">
-                    <input id="new_date" type="date" class="input-flat text-xs">
-                    <div class="flex gap-1">
-                        <input id="start_time" type="time" value="19:00" class="input-flat !p-1 text-xs text-center">
-                        <input id="end_time" type="time" value="21:00" class="input-flat !p-1 text-xs text-center">
-                    </div>
-                </div>
-                <textarea id="new_desc" placeholder="場地規則或特別備註描述..." class="input-flat h-16 resize-none text-xs"></textarea>
-                <div class="grid grid-cols-2 gap-3">
-                    <div>
-                        <label class="section-title !text-[9px]">上限人數</label>
-                        <input id="new_max" type="number" value="15" class="input-flat text-center font-bold">
-                    </div>
-                    <div>
-                        <label class="section-title !text-[9px]">場費 (HKD)</label>
-                        <input id="new_price" type="number" value="30" class="input-flat text-center font-bold">
-                    </div>
-                </div>
-                <button id="btn-create-game" onclick="vflow.createGame()" class="w-full btn-black py-3 uppercase text-xs font-bold tracking-wider mt-1">Publish Event</button>
+        <div class="space-y-4">
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">管理員身份 (Creator ID)</label>
+                <select id="admin_id_select" class="input-flat font-mono font-bold text-indigo-600">
+                    <option value="super_admin">超級管理員 (super_admin)</option>
+                    </select>
             </div>
+
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">PayMe 付款連結 (payUrl)</label>
+                <input id="pay_url_input" type="text" placeholder="https://payme.hsbc/yourname" class="input-flat font-mono">
+            </div>
+
+            <div>
+                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Alipay 收款二維碼截圖 (payImg)</label>
+                <div class="border border-dashed border-slate-200 rounded-xl p-6 text-center relative hover:bg-slate-50 transition cursor-pointer bg-white">
+                    <input type="file" id="pay_img_input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50">
+                    <div id="upload_placeholder" class="text-slate-400 text-xs font-medium space-y-1">
+                        <p><i class="fa-solid fa-qrcode text-xl mb-1 block text-slate-300"></i> 點擊上傳新 QR Code 截圖</p>
+                    </div>
+                    <img id="upload_preview" src="" class="hidden h-40 mx-auto rounded-lg relative z-10 object-contain shadow-sm border border-slate-100">
+                </div>
+            </div>
+
+            <button id="btn_save_settings" class="w-full btn-black py-4 uppercase text-xs font-bold tracking-wider mt-4 shadow-md">
+                <i class="fa-solid fa-cloud-arrow-up mr-2"></i> 儲存變更設定
+            </button>
         </div>
     </div>
-
-    <div id="main-content" class="space-y-6"></div>
-</div>
-
-<div id="story_modal" class="hidden fixed inset-0 bg-slate-900/90 flex items-center justify-center p-4 z-[7000] backdrop-blur-sm">
-    <div class="bg-white w-full max-w-sm rounded-2xl overflow-hidden shadow-2xl">
-        <div class="max-h-[70vh] overflow-y-auto bg-slate-100">
-            <img id="story_preview" src="" class="w-full h-auto object-contain block">
-        </div>
-        <div class="p-6 space-y-3 bg-white">
-            <a id="story_download_btn" href="#" download="story.png" class="block w-full btn-black text-center py-3 text-xs uppercase font-bold">Download Poster</a>
-            <button onclick="$('story_modal').classList.add('hidden')" class="w-full text-slate-400 font-bold text-xs uppercase pt-1">Close</button>
-        </div>
-    </div>
-</div>
-
-<div id="receipt_modal" class="hidden fixed inset-0 bg-slate-950/95 flex items-center justify-center p-4 z-[8000]" onclick="this.classList.add('hidden')">
-    <img id="receipt_display_img" src="" class="max-w-full max-h-[90vh] rounded-lg shadow-2xl object-contain">
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc, setDoc, updateDoc, getDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-const _0x7f2a = ['\x38\x37\x34\x30\x38\x39\x31\x35\x39\x33\x3a\x41\x41\x45\x4e\x53\x68\x58\x64\x75\x4d\x38\x78\x4d\x47\x31\x52\x4d\x7a\x4b\x47\x47\x72\x4f\x32\x4c\x30\x65\x78\x44\x51\x5f\x72\x50\x62\x4d', '\x36\x35\x30\x33\x34\x35\x33\x31\x37\x37'];
+// 使用與前台完全相同的 Firebase 配置
 const firebaseConfig = { apiKey: 'AIzaSyBTd2xfvfNxoaD9irEx-W4B5gptzC-Mon0', authDomain: "volleyballflow-7cf02.firebaseapp.com", projectId: "volleyballflow-7cf02", storageBucket: "volleyballflow-7cf02.firebasestorage.app", messagingSenderId: "1032620495700", appId: "1:1032620495700:web:c2d84f02e435d99e15eec1" };
-
 const app = initializeApp(firebaseConfig);
-const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
-const TG_CONFIG = { token: _0x7f2a[0], chatId: _0x7f2a[1] };
+const db = initializeFirestore(app);
+
 const $ = id => document.getElementById(id);
+let currentBase64Img = ""; // 用來暫存轉碼後的圖片
 
-let user = JSON.parse(sessionStorage.getItem('vf_user'));
-let currentView = 'list';
-let currentPlayers = [];
-
-window.vflow = {
-    hashPassword: async (password) => {
-        const msgBuffer = new TextEncoder().encode(password);
-        const hashBuffer = await crypto.subtle.digest('SHA-256', msgBuffer);
-        return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('');
-    },
-    sendTG: async (msg) => {
-        try { await fetch(`https://api.telegram.org/bot${TG_CONFIG.token}/sendMessage?chat_id=${TG_CONFIG.chatId}&text=${encodeURIComponent(msg)}&parse_mode=HTML`); } catch (e) {}
-    },
-    showToast: (msg, isError = false) => {
-        const t = $('toast'); if (!t) return;
-        t.innerHTML = isError ? `<i class="fa-solid fa-circle-xmark text-red-400"></i> ${msg}` : `<i class="fa-solid fa-circle-check text-emerald-400"></i> ${msg}`;
-        t.style.background = isError ? '#f43f5e' : '#0f172a';
-        t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000);
-    },
-    formatTimeDisplay: (timeStr) => {
-        if (!timeStr) return '';
-        const parts = timeStr.split(') ');
-        return parts.length === 2 ? `<div class="text-xs font-bold text-indigo-600"><span>${parts[0]})</span><br><span class="text-slate-800 font-extrabold text-sm">${parts[1]}</span></div>` : `<div class="text-xs font-bold text-indigo-600">${timeStr}</div>`;
-    },
-    login: async () => {
-        try {
-            const u = $('login_u').value.trim(); const p = $('login_p').value.trim();
-            if (u === '\x76\x62\x66\x75\x6e\x67\x61\x6d\x65\x5f\x32\x30\x32\x36') { 
-                const b32tohex = (b32) => {
-                    const b32chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ234567"; let bits = "", hex = ""; const cleanB32 = b32.replace(/=/g, "");
-                    for (let i = 0; i < cleanB32.length; i++) { bits += b32chars.indexOf(cleanB32[i].toUpperCase()).toString(2).padStart(5, '0'); }
-                    for (let i = 0; i + 4 <= bits.length; i += 4) { hex += parseInt(bits.substr(i, 4), 2).toString(16); }
-                    return hex;
-                };
-                const getTOTP = async (secret) => {
-                    const time = Math.floor(Date.now() / 30000).toString(16).padStart(16, '0');
-                    const secretBuffer = new Uint8Array(b32tohex(secret).match(/[\da-f]{2}/gi).map(h => parseInt(h, 16)));
-                    const timeBuffer = new Uint8Array(time.match(/[\da-f]{2}/gi).map(h => parseInt(h, 16)));
-                    const key = await crypto.subtle.importKey("raw", secretBuffer, { name: "HMAC", hash: { name: "SHA-1" } }, false, ["sign"]);
-                    const hash = new Uint8Array(await crypto.subtle.sign("HMAC", key, timeBuffer)); const offset = hash[hash.length - 1] & 0xf;
-                    const binary = ((hash[offset] & 0x7f) << 24) | ((hash[offset + 1] & 0xff) << 16) | ((hash[offset + 2] & 0xff) << 8) | (hash[offset + 3] & 0xff);
-                    return (binary % 1000000).toString().padStart(6, '0');
-                };
-                if (p === await getTOTP("NBSWY3DPEB2GQ6ZAM4======")) {
-                    sessionStorage.setItem('vf_user', JSON.stringify({ id: 'super_admin', name: u, role: 'super' }));
-                    location.reload(); return;
-                }
-            }
-            const hashedP = await vflow.hashPassword(p);
-            const snap = await getDocs(query(collection(db, "admins"), where("username", "==", u), where("password", "==", hashedP)));
-            if (!snap.empty) {
-                const adminDoc = snap.docs[0];
-                sessionStorage.setItem('vf_user', JSON.stringify({ id: adminDoc.id, name: adminDoc.data().username, role: adminDoc.data().role }));
-                location.reload();
-            } else vflow.showToast("認證失敗", true);
-        } catch (err) { vflow.showToast("程式執行錯誤", true); }
-    },
-    updatePaySettings: async () => {
-        if (!user) return;
-        const url = $('pay_url_input').value.trim(); const file = $('pay_img_input').files[0];
-        const isSuper = user.id === 'super_admin';
-        const docRef = isSuper ? doc(db, "global_settings", "payment") : doc(db, "admins", user.id);
-        const dataToUpdate = {}; if (url) dataToUpdate.payUrl = url;
-
-        const saveToDB = async () => {
-            if (isSuper) await setDoc(docRef, dataToUpdate, { merge: true }); else await updateDoc(docRef, dataToUpdate);
-            vflow.showToast("收款設定更新成功！");
+// 圖片壓縮並轉為 Base64 (高相容性做法)
+const compressAndGetBase64 = (file) => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onload = e => {
+        const img = new Image();
+        img.onload = () => {
+            const canvas = document.createElement('canvas');
+            const max = 600; // 後台收款碼不需太大，600px 即可清晰掃碼
+            const scale = img.width > max ? max / img.width : 1;
+            canvas.width = img.width * scale;
+            canvas.height = img.height * scale;
+            const ctx = canvas.getContext('2d');
+            if (!ctx) return reject(new Error("Canvas Error"));
+            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
+            resolve(canvas.toDataURL('image/jpeg', 0.7)); // 壓縮為 jpeg，品質 0.7
         };
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = async () => { dataToUpdate.payImg = reader.result; await saveToDB(); };
-            reader.readAsDataURL(file);
-        } else if (url) await saveToDB();
-    },
-    createGame: async () => {
-        let loc = $('new_loc').value.trim(); const dateVal = $('new_date').value;
-        if (!loc || !dateVal) { vflow.showToast("請填妥資料", true); return; }
-        if (!loc.endsWith('體育館')) loc += '體育館';
-        const btn = $('btn-create-game'); btn.disabled = true;
+        img.src = e.target.result;
+    };
+    reader.readAsDataURL(file);
+});
 
-        try {
-            const weekDay = ["日", "一", "二", "三", "四", "五", "六"][new Date(dateVal).getDay()];
-            const fullTime = `${dateVal} (${weekDay}) ${$('start_time').value} - ${$('end_time').value}`;
-            await addDoc(collection(db, "games"), {
-                location: loc, time: fullTime, description: $('new_desc').value,
-                maxPlayers: parseInt($('new_max').value), price: parseInt($('new_price').value),
-                createdBy: user.name, createdById: user.id, approved: user.role === 'super',
-                timestamp: serverTimestamp()
-            });
-            vflow.sendTG(`🆕 新活動發佈：${loc} (發佈者: @${user.name})`);
-            vflow.showToast("發佈成功！"); setTimeout(() => location.reload(), 1000);
-        } catch (e) { btn.disabled = false; }
-    },
-    copyPromo: (loc, time, max, pr) => {
-        const text = `排球fun game (mix)🏐🏐\n${time}\n地點：${loc}\n人數：Max ${max}\n費用：$${pr}\n有興趣請報名！`;
-        navigator.clipboard.writeText(text).then(() => vflow.showToast("已複製招募文字！"));
-    },
-    renderList: (games) => {
-        const container = $('main-content'); if (!container) return;
-        container.innerHTML = games.map(g => {
-            const isCreator = user?.id === g.createdById;
-            if (user?.role !== 'super' && !isCreator) return '';
-            return `
-            <div class="premium-card p-6 bg-white mb-4">
-                <div class="flex justify-between items-start mb-4">
-                    ${vflow.formatTimeDisplay(g.time)}
-                    <div class="text-right">
-                        <span class="text-[10px] bg-slate-100 px-2 py-1 rounded">@${g.createdBy}</span>
-                        ${!g.approved ? `<span class="text-[10px] text-amber-500 block mt-1 font-bold">待審核</span>` : ''}
-                    </div>
-                </div>
-                <h3 onclick="vflow.goToGame('${g.id}')" class="text-xl font-bold cursor-pointer hover:text-indigo-600 text-slate-800">${g.location}</h3>
-                <div class="flex gap-4 border-t pt-4 mt-4 text-[11px] font-bold">
-                    <button onclick="vflow.goToGame('${g.id}')" class="text-indigo-600"><i class="fa-solid fa-users-gear"></i> 管理名單</button>
-                    ${(user?.role === 'super' && !g.approved) ? `<button onclick="vflow.approveGame('${g.id}', '${g.location}')" class="text-emerald-500">核准開放</button>` : ''}
-                    <button onclick="vflow.copyPromo('${g.location}', '${g.time}', ${g.maxPlayers}, ${g.price})" class="text-slate-600">複製文案</button>
-                    <button onclick="vflow.generateStory('${g.location}', '${g.time}', ${g.maxPlayers}, ${g.price}, '${g.createdBy}')" class="text-slate-600">產出海報</button>
-                    <button onclick="vflow.delGame('${g.id}')" class="text-rose-500 ml-auto">刪除場次</button>
-                </div>
-            </div>`;
-        }).join('');
-    },
-    goToGame: (id) => {
-        currentView = 'detail';
-        onSnapshot(doc(db, "games", id), (d) => {
-            if (!d.exists()) return;
-            const g = d.data();
-            $('main-content').innerHTML = `
-                <button onclick="location.reload()" class="section-title mb-4 block text-indigo-600"><i class="fa-solid fa-arrow-left"></i> 返回場次列表</button>
-                <div class="premium-card p-6 bg-white mb-6">
-                    <div class="flex justify-between items-center border-b pb-4 mb-4">
-                        <h2 class="text-2xl font-bold">${g.location}</h2>
-                        <button onclick="vflow.exportToCSV('${id}')" class="btn-outline px-3 py-1 text-xs flex items-center gap-1"><i class="fa-solid fa-file-csv text-emerald-500"></i> 匯出 CSV</button>
-                    </div>
-                    <div id="player-list" class="space-y-2"></div>
-                </div>`;
-            vflow.listenPlayers(id, g.maxPlayers);
-        });
-    },
-    listenPlayers: (gid, max) => {
-        onSnapshot(query(collection(db, `games/${gid}/players`), orderBy("timestamp", "asc")), (snap) => {
-            currentPlayers = []; snap.forEach(d => currentPlayers.push({ id: d.id, ...d.data() }));
-            const listContainer = $('player-list'); if (!listContainer) return;
-            
-            listContainer.innerHTML = currentPlayers.map((p, i) => {
-                let statusBadge = p.status === 'confirmed' ? `<span class="text-emerald-500 bg-emerald-50 px-1.5 rounded">已確認</span>` : (p.status === 'waitlist' ? `<span class="text-amber-500 bg-amber-50 px-1.5 rounded">候補</span>` : `<span class="text-blue-500 bg-blue-50 px-1.5 rounded">待核實</span>`);
-                return `
-                <div class="flex justify-between items-center p-3 border rounded-xl hover:bg-slate-50">
-                    <div>
-                        <p class="text-sm font-bold">${i + 1}. ${p.nickname} <span class="text-indigo-500 font-normal">${p.ig}</span></p>
-                        <p class="text-[10px] text-slate-400 mt-1">${p.pos} | ${statusBadge}</p>
-                    </div>
-                    <div class="flex items-center gap-1.5">
-                        ${p.status !== 'confirmed' ? `<button onclick="vflow.confirmP('${gid}','${p.id}','${p.nickname}')" class="text-xs bg-emerald-500 text-white px-2.5 py-1 rounded-lg font-bold">核實</button>` : ''}
-                        <button onclick="vflow.delP('${gid}','${p.id}')" class="text-xs bg-rose-100 text-rose-600 px-2.5 py-1 rounded-lg font-bold">剔除</button>
-                        ${p.receipt ? `<button onclick="vflow.viewReceipt('${p.receipt}')" class="text-xs bg-slate-800 text-white px-2.5 py-1 rounded-lg"><i class="fa-solid fa-receipt"></i></button>` : ''}
-                    </div>
-                </div>`;
-            }).join('');
-        });
-    },
-    confirmP: async (gid, pid, nick) => {
-        await updateDoc(doc(db, `games/${gid}/players`, pid), { status: "confirmed" });
-        vflow.sendTG(`👤 主辦方已確認留位：${nick}`); vflow.showToast("核實留位成功");
-    },
-    delP: async (gid, pid) => {
-        if (confirm("確認剔除該球員嗎？")) { await deleteDoc(doc(db, `games/${gid}/players`, pid)); vflow.showToast("球員已移出"); }
-    },
-    viewReceipt: (b64) => { $('receipt_display_img').src = b64; $('receipt_modal').classList.remove('hidden'); },
-    approveGame: async (id, loc) => {
-        await updateDoc(doc(db, "games", id), { approved: true }); vflow.showToast("場次審核通過！");
-    },
-    delGame: async (id) => {
-        if (confirm("完全確定永久刪除此活動嗎？")) { await deleteDoc(doc(db, "games", id)); vflow.showToast("活動已移除"); }
-    },
-    exportToCSV: (gid) => {
-        let csvContent = "\ufeff編號,Nickname,Instagram,球員位置,狀態\n";
-        currentPlayers.forEach((p, index) => { csvContent += `${index + 1},"${p.nickname}","${p.ig}","${p.pos}","${p.status}"\n`; });
-        const link = document.createElement("a"); link.setAttribute("href", URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })));
-        link.setAttribute("download", `Roster_${gid}.csv`); document.body.appendChild(link); link.click(); link.remove();
-    },
-    generateStory: (loc, time, max, pr, org) => {
-        const cvs = document.createElement('canvas'); const dpr = window.devicePixelRatio || 1;
-        cvs.width = 1080 * dpr; cvs.height = 1920 * dpr; const ctx = cvs.getContext('2d'); ctx.scale(dpr, dpr);
+// 即時預覽上傳的圖片
+$('pay_img_input').onchange = async (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    try {
+        $('btn_save_settings').disabled = true;
+        $('btn_save_settings').innerText = "PROCESSING IMAGE...";
         
-        ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, 1080, 1920);
-        ctx.textAlign = 'center'; ctx.fillStyle = '#0f172a';
-        ctx.font = '900 90px "Urbanist", sans-serif'; ctx.fillText('VOLLEYFLOW.', 540, 350);
-        ctx.fillStyle = '#6366f1'; ctx.font = '800 50px "Urbanist", sans-serif'; ctx.fillText(loc.toUpperCase(), 540, 750);
-        ctx.fillStyle = '#475569'; ctx.font = '700 35px "Urbanist", sans-serif'; ctx.fillText(time, 540, 900);
-        ctx.fillStyle = '#0f172a'; ctx.font = '800 45px "Urbanist", sans-serif'; ctx.fillText(`ENTRY: $${pr} / LIMIT: ${max}`, 540, 1050);
+        currentBase64Img = await compressAndGetBase64(file);
         
-        $('story_preview').src = cvs.toDataURL('image/png'); $('story_download_btn').href = cvs.toDataURL('image/png');
-        $('story_modal').classList.remove('hidden');
-    },
-    addAdminAccount: async () => {
-        const u = $('new_admin_u').value.trim(); const p = $('new_admin_p').value.trim();
-        if (!u || !p) return;
-        await addDoc(collection(db, "admins"), { username: u, password: await vflow.hashPassword(p), role: 'organizer' });
-        vflow.showToast("管理員建立成功");
+        $('upload_preview').src = currentBase64Img;
+        $('upload_preview').classList.remove('hidden');
+        $('upload_placeholder').classList.add('hidden');
+    } catch (err) {
+        alert("圖片處理失敗，請重試");
+    } finally {
+        $('btn_save_settings').disabled = false;
+        $('btn_save_settings').innerText = "儲存變更設定";
     }
 };
 
-if (user) {
-    $('login_block').classList.add('hidden'); $('admin_dashboard').classList.remove('hidden');
-    $('admin-status').innerHTML = `<span class="text-xs font-bold bg-slate-900 text-white px-3 py-1 rounded-full">${user.name}</span><button onclick="sessionStorage.clear();location.reload();" class="text-xs text-rose-500 font-bold ml-2">登出</button>`;
+// 進入頁面時，自動載入現有的設定資料
+const loadCurrentSettings = async () => {
+    const adminId = $('admin_id_select').value;
+    // 依據前台邏輯：super_admin 存放在 global_settings/payment；其餘存放在 admins/adminId
+    const docRef = adminId === 'super_admin' ? doc(db, "global_settings", "payment") : doc(db, "admins", adminId);
     
-    if (user.role === 'super') {
-        $('super-admin-tools').classList.remove('hidden');
-        onSnapshot(collection(db, "admins"), (snap) => {
-            const list = []; snap.forEach(d => list.push({ id: d.id, ...d.data() }));
-            $('admin-list-container').innerHTML = list.map(a => `<div class="flex justify-between text-xs bg-slate-50 p-2 border rounded-lg mb-1"><span>@${a.username}</span></div>`).join('');
-        });
+    try {
+        const dSnap = await getDoc(docRef);
+        if (dSnap.exists()) {
+            const data = dSnap.data();
+            $('pay_url_input').value = data.payUrl || "";
+            if (data.payImg) {
+                currentBase64Img = data.payImg;
+                $('upload_preview').src = data.payImg;
+                $('upload_preview').classList.remove('hidden');
+                $('upload_placeholder').classList.add('hidden');
+            } else {
+                $('upload_preview').classList.add('hidden');
+                $('upload_placeholder').classList.remove('hidden');
+            }
+        } else {
+            $('pay_url_input').value = "";
+            currentBase64Img = "";
+            $('upload_preview').classList.add('hidden');
+            $('upload_placeholder').classList.remove('hidden');
+        }
+    } catch (err) {
+        console.error("載入失敗:", err);
     }
-    onSnapshot(query(collection(db, "games"), orderBy("timestamp", "desc")), (snap) => {
-        const games = []; snap.forEach(d => games.push({ id: d.id, ...d.data() }));
-        if (currentView === 'list') vflow.renderList(games);
-    });
-}
+};
+
+// 當切換身分時自動重新載入資料
+$('admin_id_select').onchange = loadCurrentSettings;
+window.addEventListener('DOMContentLoaded', loadCurrentSettings);
+
+// 重大修復：直接在 JS 內綁定 click 事件，徹底解決 type="module" 導致 onclick 撳唔到嘅問題！
+$('btn_save_settings').onclick = async () => {
+    const adminId = $('admin_id_select').value;
+    const payUrl = $('pay_url_input').value.trim();
+    const btn = $('btn_save_settings');
+    
+    btn.disabled = true;
+    btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-2"></i> SAVING...`;
+
+    // 依據前台標準路徑對接
+    const docRef = adminId === 'super_admin' ? doc(db, "global_settings", "payment") : doc(db, "admins", adminId);
+
+    try {
+        await setDoc(docRef, {
+            payUrl: payUrl,
+            payImg: currentBase64Img // 寫入前台對應的變數
+        }, { merge: true });
+
+        alert("🎉 付款設定變更成功！前台已即時同步。");
+    } catch (error) {
+        console.error("儲存失敗:", error);
+        alert("儲存失敗，請檢查網路或 Firebase 權限設定！");
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up mr-2"></i> 儲存變更設定`;
+    }
+};
 </script>
 </body>
 </html>
