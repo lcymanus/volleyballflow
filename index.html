@@ -152,6 +152,7 @@ body {
     <div id="main-content" class="space-y-6"></div>
 </div>
 
+<!-- 報名 Bottom Sheet -->
 <div id="sheet-overlay" class="fixed inset-0 bg-slate-900/40 opacity-0 pointer-events-none transition-opacity duration-300 z-[4999] backdrop-blur-xs" onclick="vflow.closeSheet()"></div>
 <div id="bottom-sheet" class="bottom-sheet">
     <div class="max-w-md mx-auto relative z-10">
@@ -267,7 +268,6 @@ window.vflow = {
     renderList: (games) => {
         const container = $('main-content');
         if (!container) return;
-        // 用戶端只顯示通過核准的活動 (g.approved === true)
         const approvedGames = games.filter(g => g.approved);
         if (approvedGames.length === 0) {
             container.innerHTML = `<div class="text-center py-24"><i class="fa-solid fa-circle-nodes text-3xl text-slate-200 mb-3 block"></i><p class="section-title">No Active Events Available</p></div>`;
@@ -303,45 +303,39 @@ window.vflow = {
                 <button onclick="location.reload()" class="section-title mb-6 flex items-center gap-2 hover:text-slate-900 transition-colors">
                     <i class="fa-solid fa-arrow-left"></i> Back to list
                 </button>
-                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 items-start">
-                    <div class="md:col-span-2 space-y-6">
-                        <div>
-                            <h2 class="text-3xl md:text-4xl font-extrabold tracking-tighter text-slate-900 uppercase mb-3">${g.location}</h2>
-                            <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-100 shadow-xs">
-                                ${vflow.formatTimeDisplay(g.time)}
-                                <span id="p-count" class="text-xs font-bold bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-full tracking-wide">0 / ${g.maxPlayers}</span>
-                            </div>
-                        </div>
-                        ${g.description ? `
-                        <div class="p-4 border-l-4 border-indigo-500 bg-white rounded-r-xl">
-                            <p class="section-title !text-[9px] mb-1">Event Description</p>
-                            <p class="text-xs md:text-sm text-slate-600 leading-relaxed whitespace-pre-line">${g.description}</p>
-                        </div>` : ''}
-                        
-                        <div class="premium-card p-6">
-                            <h3 class="section-title mb-4"><i class="fa-solid fa-user-plus mr-1"></i> Player Information</h3>
-                            <div class="space-y-4">
-                                <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                                    <input id="nickname" type="text" placeholder="NICKNAME (名字/綽號)" class="input-flat">
-                                    <input id="ig" type="text" placeholder="INSTAGRAM ACCOUNT (必須帶 @)" class="input-flat">
-                                </div>
-                                <div>
-                                    <label class="section-title !text-[9px] mb-2 block">Select Position (多選最多兩項)</label>
-                                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
-                                        ${['Setter (二傳)', 'Outside (大搥)', 'Middle (快攻)', 'Opposite (接應)', 'Libero (自由人)'].map(p => `
-                                            <button data-pos="${p}" onclick="vflow.setPos('${p}')" class="pos-btn btn-outline py-3 text-[10px] md:text-xs uppercase bg-white truncate">${p}</button>
-                                        `).join('')}
-                                    </div>
-                                </div>
-                                <button onclick="vflow.prepJoin('${id}', ${g.price}, '${g.createdById}', '${g.createdBy}', ${g.maxPlayers})" class="w-full btn-black py-4 uppercase text-xs font-bold tracking-wider mt-2 shadow-md">
-                                    Proceed to Register ($${g.price})
-                                </button>
-                            </div>
+                <div class="max-w-2xl mx-auto space-y-6">
+                    <div>
+                        <h2 class="text-3xl md:text-4xl font-extrabold tracking-tighter text-slate-900 uppercase mb-3">${g.location}</h2>
+                        <div class="flex justify-between items-center bg-white p-4 rounded-xl border border-slate-100 shadow-xs">
+                            ${vflow.formatTimeDisplay(g.time)}
+                            <span id="p-count" class="text-xs font-bold bg-indigo-50 text-indigo-600 px-3 py-1.5 rounded-full tracking-wide">0 / ${g.maxPlayers}</span>
                         </div>
                     </div>
-                    <div class="space-y-4">
-                        <h3 class="section-title border-b border-slate-100 pb-2"><i class="fa-solid fa-list-ol mr-1"></i> Player Roster</h3>
-                        <div id="player-list" class="space-y-3 max-h-[70vh] overflow-y-auto"></div>
+                    ${g.description ? `
+                    <div class="p-4 border-l-4 border-indigo-500 bg-white rounded-r-xl">
+                        <p class="section-title !text-[9px] mb-1">Event Description</p>
+                        <p class="text-xs md:text-sm text-slate-600 leading-relaxed whitespace-pre-line">${g.description}</p>
+                    </div>` : ''}
+                    
+                    <div class="premium-card p-6">
+                        <h3 class="section-title mb-4"><i class="fa-solid fa-user-plus mr-1"></i> Player Information</h3>
+                        <div class="space-y-4">
+                            <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                                <input id="nickname" type="text" placeholder="NICKNAME (名字/綽號)" class="input-flat">
+                                <input id="ig" type="text" placeholder="INSTAGRAM ACCOUNT (必須帶 @)" class="input-flat">
+                            </div>
+                            <div>
+                                <label class="section-title !text-[9px] mb-2 block">Select Position (多選最多兩項)</label>
+                                <div class="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                                    ${['Setter (二傳)', 'Outside (大搥)', 'Middle (快攻)', 'Opposite (接應)', 'Libero (自由人)'].map(p => `
+                                        <button data-pos="${p}" onclick="vflow.setPos('${p}')" class="pos-btn btn-outline py-3 text-[10px] md:text-xs uppercase bg-white truncate">${p}</button>
+                                    `).join('')}
+                                </div>
+                            </div>
+                            <button onclick="vflow.prepJoin('${id}', ${g.price}, '${g.createdById}', '${g.createdBy}', ${g.maxPlayers})" class="w-full btn-black py-4 uppercase text-xs font-bold tracking-wider mt-2 shadow-md">
+                                Proceed to Register ($${g.price})
+                            </button>
+                        </div>
                     </div>
                 </div>`;
             
@@ -355,25 +349,6 @@ window.vflow = {
             const confirmedCount = currentPlayers.filter(p => p.status === 'confirmed').length;
             if ($('p-count')) $('p-count').innerText = `${confirmedCount} 已確認 / ${max} 名額`;
             isWaitlistMode = (confirmedCount >= max);
-            
-            const listContainer = $('player-list');
-            if (!listContainer) return;
-
-            listContainer.innerHTML = currentPlayers.map((p, i) => {
-                if (p.status !== 'confirmed' && p.status !== 'waitlist') return '';
-                const displayStatus = p.status === 'waitlist' ? `<span class="text-amber-500 text-[9px] font-bold">候補</span>` : `<span class="text-emerald-500 text-[9px] font-bold">已核實</span>`;
-                return `
-                <div class="bg-white border border-slate-100 p-3 rounded-xl flex justify-between items-center shadow-2xs">
-                    <span class="text-xs font-bold text-slate-700">${i + 1}. ${p.nickname}</span>
-                    <div class="text-right">
-                        <p class="text-[9px] text-slate-400 font-medium uppercase">${p.pos}</p>
-                        ${displayStatus}
-                    </div>
-                </div>`;
-            }).join('');
-            if (listContainer.innerHTML.trim() === '') {
-                listContainer.innerHTML = `<p class="section-title text-center py-6 text-slate-300">No confirmed list yet</p>`;
-            }
         });
     },
     setPos: (p) => {
