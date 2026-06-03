@@ -2,7 +2,7 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>VolleyballFlow | 後台管理系統</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
@@ -10,209 +10,295 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 <style>
-body {
-    background: #f8fafc;
-    color: #0f172a;
-    font-family: 'Urbanist', sans-serif;
-}
-.admin-card {
-    background: #ffffff;
-    border: 1px solid #e2e8f0;
-    border-radius: 16px;
-    box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.02);
-}
-.btn-black {
-    background: #0f172a;
-    color: #ffffff;
-    border-radius: 12px;
-    font-weight: 600;
-    transition: all 0.2s ease;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-}
-.btn-black:hover { background: #1e293b; }
-.btn-black:disabled { opacity: 0.4; pointer-events: none; background: #64748b; }
-.input-flat {
-    width: 100%;
-    border: 1px solid #e2e8f0;
-    padding: 14px 16px;
-    border-radius: 12px;
-    font-size: 14px;
-    outline: none;
-    transition: all 0.2s ease;
-    background: #f8fafc;
-}
-.input-flat:focus {
-    border-color: #6366f1;
-    background: #ffffff;
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
-}
+body { background: #f8fafc; color: #0f172a; font-family: 'Urbanist', sans-serif; }
+.admin-card { background: #ffffff; border: 1px solid #e2e8f0; border-radius: 16px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.02); }
+.input-flat { width: 100%; border: 1px solid #e2e8f0; padding: 12px 16px; border-radius: 12px; font-size: 14px; outline: none; background: #f1f5f9; transition: all 0.2s; }
+.input-flat:focus { border-color: #4f46e5; background: #ffffff; box-shadow: 0 0 0 4px rgba(79, 70, 229, 0.1); }
+.btn-indigo { background: #4f46e5; color: #ffffff; border-radius: 12px; font-weight: 600; transition: all 0.2s; display: flex; align-items: center; justify-content: center; }
+.btn-indigo:hover { background: #4338ca; }
+.btn-indigo:disabled { opacity: 0.5; pointer-events: none; }
+.section-title { font-size: 11px; font-weight: 800; text-transform: uppercase; letter-spacing: 2px; color: #64748b; }
 </style>
 </head>
 <body class="p-4 md:p-8">
 
-<div class="max-w-xl mx-auto w-full">
-    <header class="mb-8 mt-4 border-b border-slate-200 pb-6">
-        <h1 class="text-2xl font-extrabold tracking-tighter">
-            VOLLEYBALLFLOW <span class="text-indigo-600">管理後台</span>
-        </h1>
-        <p class="text-xs font-bold text-slate-400 tracking-widest uppercase mt-1">Payment & Global Settings</p>
+<div class="max-w-7xl mx-auto space-y-8">
+    <header class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-200 pb-6 gap-4">
+        <div>
+            <h1 class="text-3xl font-black tracking-tight text-slate-900">VolleyballFlow <span class="text-indigo-600">Backend</span></h1>
+            <p class="section-title mt-1">主辦方與場次管理後台</p>
+        </div>
+        <div class="flex items-center gap-3 bg-white p-3 rounded-xl border border-slate-200 shadow-2xs">
+            <span class="text-xs font-bold text-slate-500">當前管理員身份：</span>
+            <select id="admin-selector" onchange="window.adminFlow.loadPaymentSettings()" class="text-xs font-bold text-indigo-600 outline-none bg-transparent cursor-pointer">
+                <option value="super_admin">超級管理員 (super_admin)</option>
+                <option value="admin_01">一般主辦方 (admin_01)</option>
+                <option value="admin_02">一般主辦方 (admin_02)</option>
+            </select>
+        </div>
     </header>
 
-    <div class="admin-card p-6 space-y-6">
-        <div class="border-b border-slate-100 pb-3">
-            <h2 class="text-lg font-bold tracking-tight text-slate-800"><i class="fa-solid fa-wallet mr-2 text-indigo-500"></i>收款設定變更</h2>
-            <p class="text-xs text-slate-400 mt-0.5">此設定會直接連動前台報名時的 PayMe 與 Alipay 顯示</p>
-        </div>
-
-        <div class="space-y-4">
-            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">管理員身份 (Creator ID)</label>
-                <select id="admin_id_select" class="input-flat font-mono font-bold text-indigo-600">
-                    <option value="super_admin">超級管理員 (super_admin)</option>
-                    </select>
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">PayMe 付款連結 (payUrl)</label>
-                <input id="pay_url_input" type="text" placeholder="https://payme.hsbc/yourname" class="input-flat font-mono">
-            </div>
-
-            <div>
-                <label class="block text-xs font-bold uppercase tracking-wider text-slate-500 mb-2">Alipay 收款二維碼截圖 (payImg)</label>
-                <div class="border border-dashed border-slate-200 rounded-xl p-6 text-center relative hover:bg-slate-50 transition cursor-pointer bg-white">
-                    <input type="file" id="pay_img_input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-50">
-                    <div id="upload_placeholder" class="text-slate-400 text-xs font-medium space-y-1">
-                        <p><i class="fa-solid fa-qrcode text-xl mb-1 block text-slate-300"></i> 點擊上傳新 QR Code 截圖</p>
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        
+        <div class="space-y-6">
+            <div class="admin-card p-6">
+                <h2 class="text-lg font-bold tracking-tight mb-4 text-slate-800"><i class="fa-solid fa-gear text-indigo-500 mr-1"></i> 收款資料設定</h2>
+                <div class="space-y-4">
+                    <div>
+                        <label class="section-title block mb-2">PayMe 快速付款連結</label>
+                        <input id="set_pay_url" type="text" placeholder="https://payme.hsbc/yourname" class="input-flat">
                     </div>
-                    <img id="upload_preview" src="" class="hidden h-40 mx-auto rounded-lg relative z-10 object-contain shadow-sm border border-slate-100">
+                    <div>
+                        <label class="section-title block mb-2">Alipay 收款 QR Code 截圖</label>
+                        <div class="border border-dashed border-slate-200 rounded-xl p-4 text-center relative hover:bg-slate-50 cursor-pointer bg-slate-50">
+                            <input type="file" id="set_pay_img_input" accept="image/*" class="absolute inset-0 w-full h-full opacity-0 cursor-pointer" onchange="window.adminFlow.previewPayImg(this)">
+                            <p id="pay_img_placeholder" class="text-slate-400 text-xs font-medium">點擊上傳 / 更換二維碼</p>
+                            <img id="pay_img_preview" src="" class="hidden h-32 mx-auto rounded-lg mt-2 object-contain border border-slate-200">
+                        </div>
+                    </div>
+                    <button id="btn-save-setting" onclick="window.adminFlow.savePaymentSettings()" class="w-full btn-indigo py-3.5 text-xs font-bold uppercase tracking-wider mt-2 shadow-sm">
+                        <i class="fa-solid fa-floppy-disk mr-1.5"></i> 變更及儲存設定
+                    </button>
                 </div>
             </div>
 
-            <button id="btn_save_settings" class="w-full btn-black py-4 uppercase text-xs font-bold tracking-wider mt-4 shadow-md">
-                <i class="fa-solid fa-cloud-arrow-up mr-2"></i> 儲存變更設定
-            </button>
+            <div class="admin-card p-6">
+                <h2 class="text-lg font-bold tracking-tight mb-4 text-slate-800"><i class="fa-solid fa-calendar-plus text-indigo-500 mr-1"></i> 快速發佈新場次</h2>
+                <div class="space-y-3">
+                    <input id="g_location" type="text" placeholder="場地名稱 (例如：源禾路體育館)" class="input-flat">
+                    <input id="g_time" type="text" placeholder="時間 (例如：(六) 18:00 - 20:00)" class="input-flat">
+                    <div class="grid grid-cols-2 gap-2">
+                        <input id="g_max" type="number" placeholder="名額 (例如：18)" class="input-flat">
+                        <input id="g_price" type="number" placeholder="費用 (例如：60)" class="input-flat">
+                    </div>
+                    <textarea id="g_desc" placeholder="活動備註 / 級別限制 (選填)" class="input-flat h-20 resize-none"></textarea>
+                    <button onclick="window.adminFlow.createGame()" class="w-full bg-slate-900 hover:bg-slate-800 text-white font-bold py-3.5 rounded-xl text-xs uppercase tracking-wider shadow-sm">
+                        發佈場次 (前台即時上架)
+                    </button>
+                </div>
+            </div>
         </div>
+
+        <div class="lg:col-span-2 space-y-6">
+            <div class="admin-card p-6">
+                <h2 class="text-lg font-bold tracking-tight mb-4 text-slate-800"><i class="fa-solid fa-list-check text-indigo-500 mr-1"></i> 即時報名審核中心</h2>
+                
+                <div id="games-dashboard" class="space-y-6">
+                    <p class="text-slate-400 text-xs">正在載入數據中...</p>
+                </div>
+            </div>
+        </div>
+
     </div>
+</div>
+
+<div id="img-modal" class="fixed inset-0 bg-slate-900/80 hidden z-[9999] flex items-center justify-center p-4" onclick="this.classList.add('hidden')">
+    <img id="modal-img" src="" class="max-w-full max-h-[90vh] rounded-xl shadow-2xl">
 </div>
 
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
-import { initializeFirestore, doc, getDoc, setDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+import { initializeFirestore, doc, getDoc, setDoc, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, updateDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
 
-// 使用與前台完全相同的 Firebase 配置
 const firebaseConfig = { apiKey: 'AIzaSyBTd2xfvfNxoaD9irEx-W4B5gptzC-Mon0', authDomain: "volleyballflow-7cf02.firebaseapp.com", projectId: "volleyballflow-7cf02", storageBucket: "volleyballflow-7cf02.firebasestorage.app", messagingSenderId: "1032620495700", appId: "1:1032620495700:web:c2d84f02e435d99e15eec1" };
 const app = initializeApp(firebaseConfig);
 const db = initializeFirestore(app);
 
 const $ = id => document.getElementById(id);
-let currentBase64Img = ""; // 用來暫存轉碼後的圖片
+let currentPayImgBase64 = "";
+let activeListeners = {}; // 用嚟記住每個場次嘅即時監聽器
 
-// 圖片壓縮並轉為 Base64 (高相容性做法)
-const compressAndGetBase64 = (file) => new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onload = e => {
-        const img = new Image();
-        img.onload = () => {
-            const canvas = document.createElement('canvas');
-            const max = 600; // 後台收款碼不需太大，600px 即可清晰掃碼
-            const scale = img.width > max ? max / img.width : 1;
-            canvas.width = img.width * scale;
-            canvas.height = img.height * scale;
-            const ctx = canvas.getContext('2d');
-            if (!ctx) return reject(new Error("Canvas Error"));
-            ctx.drawImage(img, 0, 0, canvas.width, canvas.height);
-            resolve(canvas.toDataURL('image/jpeg', 0.7)); // 壓縮為 jpeg，品質 0.7
-        };
-        img.src = e.target.result;
-    };
-    reader.readAsDataURL(file);
-});
-
-// 即時預覽上傳的圖片
-$('pay_img_input').onchange = async (e) => {
-    const file = e.target.files[0];
-    if (!file) return;
-    try {
-        $('btn_save_settings').disabled = true;
-        $('btn_save_settings').innerText = "PROCESSING IMAGE...";
+window.adminFlow = {
+    // 1. 讀取付款設定
+    loadPaymentSettings: async () => {
+        const adminId = $('admin-selector').value;
+        const docRef = adminId === 'super_admin' ? doc(db, "global_settings", "payment") : doc(db, "admins", adminId);
         
-        currentBase64Img = await compressAndGetBase64(file);
-        
-        $('upload_preview').src = currentBase64Img;
-        $('upload_preview').classList.remove('hidden');
-        $('upload_placeholder').classList.add('hidden');
-    } catch (err) {
-        alert("圖片處理失敗，請重試");
-    } finally {
-        $('btn_save_settings').disabled = false;
-        $('btn_save_settings').innerText = "儲存變更設定";
-    }
-};
+        // 先清空
+        $('set_pay_url').value = "";
+        $('pay_img_preview').src = "";
+        $('pay_img_preview').classList.add('hidden');
+        $('pay_img_placeholder').classList.remove('hidden');
+        currentPayImgBase64 = "";
 
-// 進入頁面時，自動載入現有的設定資料
-const loadCurrentSettings = async () => {
-    const adminId = $('admin_id_select').value;
-    // 依據前台邏輯：super_admin 存放在 global_settings/payment；其餘存放在 admins/adminId
-    const docRef = adminId === 'super_admin' ? doc(db, "global_settings", "payment") : doc(db, "admins", adminId);
-    
-    try {
-        const dSnap = await getDoc(docRef);
-        if (dSnap.exists()) {
-            const data = dSnap.data();
-            $('pay_url_input').value = data.payUrl || "";
-            if (data.payImg) {
-                currentBase64Img = data.payImg;
-                $('upload_preview').src = data.payImg;
-                $('upload_preview').classList.remove('hidden');
-                $('upload_placeholder').classList.add('hidden');
-            } else {
-                $('upload_preview').classList.add('hidden');
-                $('upload_placeholder').classList.remove('hidden');
+        try {
+            const d = await getDoc(docRef);
+            if (d.exists()) {
+                const data = d.data();
+                if (data.payUrl) $('set_pay_url').value = data.payUrl;
+                if (data.payImg) {
+                    $('pay_img_preview').src = data.payImg;
+                    $('pay_img_preview').classList.remove('hidden');
+                    $('pay_img_placeholder').classList.add('hidden');
+                    currentPayImgBase64 = data.payImg;
+                }
             }
-        } else {
-            $('pay_url_input').value = "";
-            currentBase64Img = "";
-            $('upload_preview').classList.add('hidden');
-            $('upload_placeholder').classList.remove('hidden');
+        } catch (e) { console.error("讀取付款設定失敗: ", e); }
+    },
+
+    // 2. 預覽同壓縮 QR Code 圖片
+    previewPayImg: (input) => {
+        const file = input.files[0];
+        if (!file) return;
+        const r = new FileReader();
+        r.onload = e => {
+            const img = new Image();
+            img.onload = () => {
+                const cvs = document.createElement('canvas');
+                const max = 500; // QR code 唔使太高像素，500px 夠晒
+                const scale = img.width > max ? max / img.width : 1;
+                cvs.width = img.width * scale;
+                cvs.height = img.height * scale;
+                const ctx = cvs.getContext('2d');
+                ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
+                currentPayImgBase64 = cvs.toDataURL('image/jpeg', 0.7);
+                
+                $('pay_img_preview').src = currentPayImgBase64;
+                $('pay_img_preview').classList.remove('hidden');
+                $('pay_img_placeholder').classList.add('hidden');
+            };
+            img.src = e.target.result;
+        };
+        r.readAsDataURL(file);
+    },
+
+    // 3. 儲存付款設定 (Fix 咗之前撳唔到嘅Bug)
+    savePaymentSettings: async () => {
+        const btn = $('btn-save-setting');
+        const adminId = $('admin-selector').value;
+        const payUrl = $('set_pay_url').value.trim();
+        
+        btn.disabled = true;
+        btn.innerText = "SAVING...";
+
+        try {
+            const docRef = adminId === 'super_admin' ? doc(db, "global_settings", "payment") : doc(db, "admins", adminId);
+            await setDoc(docRef, {
+                payUrl: payUrl,
+                payImg: currentPayImgBase64
+            }, { merge: true });
+            
+            alert("✅ 付款設定已成功更新！前台報名將會即時連動。");
+        } catch (e) {
+            alert("❌ 儲存失敗，請檢查網路或資料庫權限。");
+            console.error(e);
+        } finally {
+            btn.disabled = false;
+            btn.innerHTML = `<i class="fa-solid fa-floppy-disk mr-1.5"></i> 變更及儲存設定`;
         }
-    } catch (err) {
-        console.error("載入失敗:", err);
+    },
+
+    // 4. 開新場次
+    createGame: async () => {
+        const locName = $('g_location').value.trim();
+        const gTime = $('g_time').value.trim();
+        const gMax = parseInt($('g_max').value);
+        const gPrice = parseInt($('g_price').value);
+        const gDesc = $('g_desc').value.trim();
+        const adminId = $('admin-selector').value;
+        const adminName = adminId === 'super_admin' ? 'SuperAdmin' : adminId;
+
+        if (!locName || !gTime || !gMax || isNaN(gPrice)) {
+            alert("請填好晒所有主要場次資料！"); return;
+        }
+
+        try {
+            await addDoc(collection(db, "games"), {
+                location: locName,
+                time: gTime,
+                maxPlayers: gMax,
+                price: gPrice,
+                description: gDesc,
+                approved: true, // 後台開嘅場次預設自動批准顯示
+                createdBy: adminName,
+                createdById: adminId,
+                timestamp: serverTimestamp()
+            });
+            alert("🎉 新場次發佈成功！");
+            $('g_location').value = ""; $('g_time').value = ""; $('g_max').value = ""; $('g_price').value = ""; $('g_desc').value = "";
+        } catch (e) { alert("發佈場次失敗！"); }
+    },
+
+    // 5. 放大睇收據
+    viewReceipt: (base64) => {
+        $('modal-img').src = base64;
+        $('img-modal').classList.remove('hidden');
+    },
+
+    // 6. 核實球員狀態 (一鍵入正選 / 轉狀態)
+    updatePlayerStatus: async (gid, pid, newStatus) => {
+        try {
+            await updateDoc(doc(db, `games/${gid}/players`, pid), { status: newStatus });
+        } catch (e) { alert("更新失敗"); }
+    },
+
+    // 7. 刪除/拒絕球員
+    deletePlayer: async (gid, pid) => {
+        if (!confirm("確定要刪除呢個球員嘅報名紀錄？")) return;
+        try {
+            await deleteDoc(doc(db, `games/${gid}/players`, pid));
+        } catch (e) { alert("刪除失敗"); }
     }
 };
 
-// 當切換身分時自動重新載入資料
-$('admin_id_select').onchange = loadCurrentSettings;
-window.addEventListener('DOMContentLoaded', loadCurrentSettings);
-
-// 重大修復：直接在 JS 內綁定 click 事件，徹底解決 type="module" 導致 onclick 撳唔到嘅問題！
-$('btn_save_settings').onclick = async () => {
-    const adminId = $('admin_id_select').value;
-    const payUrl = $('pay_url_input').value.trim();
-    const btn = $('btn_save_settings');
-    
-    btn.disabled = true;
-    btn.innerHTML = `<i class="fa-solid fa-spinner animate-spin mr-2"></i> SAVING...`;
-
-    // 依據前台標準路徑對接
-    const docRef = adminId === 'super_admin' ? doc(db, "global_settings", "payment") : doc(db, "admins", adminId);
-
-    try {
-        await setDoc(docRef, {
-            payUrl: payUrl,
-            payImg: currentBase64Img // 寫入前台對應的變數
-        }, { merge: true });
-
-        alert("🎉 付款設定變更成功！前台已即時同步。");
-    } catch (error) {
-        console.error("儲存失敗:", error);
-        alert("儲存失敗，請檢查網路或 Firebase 權限設定！");
-    } finally {
-        btn.disabled = false;
-        btn.innerHTML = `<i class="fa-solid fa-cloud-arrow-up mr-2"></i> 儲存變更設定`;
+// 監聽所有場次同埋佢哋下面嘅球員報名
+onSnapshot(query(collection(db, "games"), orderBy("timestamp", "desc")), (gamesSnap) => {
+    const dashboard = $('games-dashboard');
+    if (gamesSnap.empty) {
+        dashboard.innerHTML = `<p class="text-slate-400 text-xs text-center py-6">目前資料庫沒有任何場次</p>`;
+        return;
     }
-};
-</script>
-</body>
-</html>
+
+    dashboard.innerHTML = ""; // 先清空
+
+    gamesSnap.forEach((gameDoc) => {
+        const g = gameDoc.data();
+        const gid = gameDoc.id;
+
+        const gameBox = document.createElement('div');
+        gameBox.className = "p-5 border border-slate-200 rounded-xl bg-slate-50 space-y-4";
+        gameBox.innerHTML = `
+            <div class="flex justify-between items-start border-b border-slate-200 pb-3">
+                <div>
+                    <h3 class="font-extrabold text-base text-slate-800 uppercase">${g.location}</h3>
+                    <p class="text-xs text-indigo-600 font-bold mt-0.5">${g.time} | 價錢: $${g.price} | 名額: ${g.maxPlayers}</p>
+                </div>
+                <span class="text-[9px] font-bold text-slate-400 bg-white border border-slate-200 px-2 py-0.5 rounded uppercase">ID: ${g.createdBy}</span>
+            </div>
+            <div id="player-rows-${gid}" class="space-y-2">
+                <p class="text-slate-400 text-[11px] italic">載入球員名冊中...</p>
+            </div>
+        `;
+        dashboard.appendChild(gameBox);
+
+        // 即時監聽該場次下所有球員嘅變動
+        if (activeListeners[gid]) activeListeners[gid](); // 拔除舊監聽防止記憶體洩漏
+        
+        activeListeners[gid] = onSnapshot(query(collection(db, `games/${gid}/players`), orderBy("timestamp", "asc")), (playersSnap) => {
+            const rowContainer = $(`player-rows-${gid}`);
+            if (!rowContainer) return;
+
+            if (playersSnap.empty) {
+                rowContainer.innerHTML = `<p class="text-slate-400 text-[11px]">暫時未有球員提交報名</p>`;
+                return;
+            }
+
+            rowContainer.innerHTML = `
+                <table class="w-full text-left text-xs bg-white border border-slate-100 rounded-lg overflow-hidden shadow-2xs">
+                    <thead>
+                        <tr class="bg-slate-100 text-slate-500 font-bold border-b border-slate-200">
+                            <th class="p-2.5">球員</th>
+                            <th class="p-2.5">位置</th>
+                            <th class="p-2.5">收據</th>
+                            <th class="p-2.5">狀態</th>
+                            <th class="p-2.5 text-right">操作</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tbody-${gid}"></tbody>
+                </table>
+            `;
+
+            const tbody = $(`tbody-${gid}`);
+            playersSnap.forEach((pDoc) => {
+                const p = pDoc.data();
+                const pid =
