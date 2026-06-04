@@ -525,7 +525,6 @@ window.vflow = {
         const dataToUpdate = {};
         if (url) dataToUpdate.payUrl = url;
 
-        // 獲取按鈕元素以提供防卡死、上傳中的 UI 反饋
         const updatePayBtn = $('btn-update-pay');
         if (updatePayBtn) {
             updatePayBtn.innerText = "更新中...";
@@ -546,7 +545,6 @@ window.vflow = {
 
         try {
             if (file) {
-                // 核心修復：防止大圖轉換崩潰卡死
                 const compressedQR = await vflow.compressImg(file);
                 dataToUpdate.payImg = compressedQR;
                 await saveToDB();
@@ -559,7 +557,6 @@ window.vflow = {
             console.error(err);
             vflow.showToast("上傳處理失敗，請嘗試更小的截圖", true); 
         } finally {
-            // 必定釋放 UI 狀態，確保按鈕下一次能繼續點擊
             if (updatePayBtn) {
                 updatePayBtn.innerText = "更新資料";
                 updatePayBtn.style.pointerEvents = "auto";
@@ -776,7 +773,7 @@ window.vflow = {
                             <div class="text-right">
                                 <p class="text-[9px] text-slate-400 font-medium uppercase">${p.pos}</p>
                                 ${displayStatus}
- Esp                            </div>
+                            </div>
                         </div>`;
                     }).join('');
                     if (listContainer.innerHTML.trim() === '') {
