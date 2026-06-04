@@ -127,7 +127,7 @@ body {
                         <input id="pay_url_input" type="text" placeholder="PayMe 網址連結" class="input-flat text-xs mb-2">
                         <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border">
                             <input id="pay_img_input" type="file" accept="image/*" class="text-[10px] w-full">
-                            <button onclick="vflow.updatePaySettings()" id="btn-update-pay" class="text-[11px] bg-indigo-600 text-white px-3 py-1.5 rounded-md font-bold shrink-0 transition-all hover:bg-indigo-700">儲存更變</button>
+                            <button id="btn-update-pay" type="button" class="text-[11px] bg-indigo-600 text-white px-3 py-1.5 rounded-md font-bold shrink-0 transition-all hover:bg-indigo-700">儲存更變</button>
                         </div>
                     </div>
                 </div>
@@ -171,7 +171,7 @@ body {
         </div>
         <div class="p-6 space-y-3 bg-white">
             <a id="story_download_btn" href="#" download="story.png" class="block w-full btn-black text-center py-3 text-xs uppercase font-bold">Download Poster</a>
-            <button onclick="$('story_modal').classList.add('hidden')" class="w-full text-slate-400 font-bold text-xs uppercase pt-1">Close</button>
+            <button onclick="document.getElementById('story_modal').classList.add('hidden')" class="w-full text-slate-400 font-bold text-xs uppercase pt-1">Close</button>
         </div>
     </div>
 </div>
@@ -192,6 +192,8 @@ const app = initializeApp(firebaseConfig);
 const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
 const storage = getStorage(app); 
 const TG_CONFIG = { token: _0x7f2a[0], chatId: _0x7f2a[1] };
+
+// 確保全域與內部都能安全獲取元素，防止隱形錯誤卡死
 const $ = id => document.getElementById(id);
 
 let user = JSON.parse(sessionStorage.getItem('vf_user'));
@@ -208,7 +210,7 @@ window.vflow = {
         try { await fetch(`https://api.telegram.org/bot${TG_CONFIG.token}/sendMessage?chat_id=${TG_CONFIG.chatId}&text=${encodeURIComponent(msg)}&parse_mode=HTML`); } catch (e) {}
     },
     showToast: (msg, isError = false) => {
-        const t = $('toast'); if (!t) return;
+        const t = document.getElementById('toast'); if (!t) return;
         t.innerHTML = isError ? `<i class="fa-solid fa-circle-xmark text-red-400"></i> ${msg}` : `<i class="fa-solid fa-circle-check text-emerald-400"></i> ${msg}`;
         t.style.background = isError ? '#f43f5e' : '#0f172a';
         t.classList.add('show'); setTimeout(() => t.classList.remove('show'), 3000);
@@ -299,66 +301,6 @@ window.vflow = {
             vflow.showToast("憑證更新失敗: " + err.message, true);
         }
     },
-    
-    // 【全新升級版】100%保證寫入與防卡死機制的 updatePaySettings
-    updatePaySettings: async () => {
-        if (!user) return;
-        const btn = $('btn-update-pay');
-        const url = $('pay_url_input').value.trim(); 
-        const file = $('pay_img_input').files[0];
-        
-        // 如果乜都無入就撳掣
-        if (!url && !file) {
-            vflow.showToast("請輸入網址或選擇圖片再儲存", true);
-            return;
-        }
-
-        const isSuper = user.id === 'super_admin';
-        const docRef = isSuper ? doc(db, "global_settings", "payment") : doc(db, "admins", user.id);
-        const originalText = btn.innerText;
-
-        // 鎖定按鈕避免重複點擊
-        btn.disabled = true;
-        btn.innerText = "處理中...";
-        btn.classList.add('opacity-50');
-
-        try {
-            let dataToUpdate = {};
-            if (url) dataToUpdate.payUrl = url;
-
-            if (file) {
-                vflow.showToast("圖片上傳中，請稍候...");
-                const compressedBase64 = await vflow.compressImg(file);
-                try {
-                    const fileName = `pay_qr_${user.id}_${Date.now()}.jpg`;
-                    const sRef = storageRef(storage, `payment_settings/${fileName}`);
-                    await uploadString(sRef, compressedBase64, 'data_url');
-                    dataToUpdate.payImg = await getDownloadURL(sRef);
-                } catch (uploadErr) {
-                    console.error(uploadErr);
-                    throw new Error("圖片上傳失敗！請確保 Firebase Storage 已啟用及設定規則。");
-                }
-            }
-
-            // 【核心修復】統一使用 setDoc 配搭 merge: true
-            // 就算資料庫裡面原本無呢個 admin 嘅設定紀錄，佢都會強行建立並寫入，唔會再出錯！
-            await setDoc(docRef, dataToUpdate, { merge: true });
-            
-            vflow.showToast("收款設定已成功更新！");
-            $('pay_img_input').value = ""; // 清空檔案輸入框
-            
-        } catch (err) {
-            // 發生任何錯誤都會喺度截住並顯示，唔會死機
-            console.error(err);
-            vflow.showToast("發生錯誤：" + err.message, true);
-        } finally {
-            // 【防卡死機制】無論成功定失敗，最後一定會解鎖按鈕
-            btn.disabled = false;
-            btn.innerText = originalText;
-            btn.classList.remove('opacity-50');
-        }
-    },
-    
     createGame: async () => {
         let loc = $('new_loc').value.trim(); const dateVal = $('new_date').value;
         if (!loc || !dateVal) { vflow.showToast("請填妥資料", true); return; }
@@ -494,6 +436,67 @@ window.vflow = {
     }
 };
 
+// 【核心技術升級】使用監聽器徹底根治上傳卡死、寫入不成功的問題
+document.addEventListener('DOMContentLoaded', () => {
+    const btnUpdatePay = document.getElementById('btn-update-pay');
+    if (btnUpdatePay) {
+        btnUpdatePay.addEventListener('click', async (e) => {
+            e.preventDefault();
+            if (!user) { vflow.showToast("登入已失效，請重新整理頁面", true); return; }
+
+            const urlInput = document.getElementById('pay_url_input');
+            const imgInput = document.getElementById('pay_img_input');
+            
+            const url = urlInput ? urlInput.value.trim() : "";
+            const file = (imgInput && imgInput.files) ? imgInput.files[0] : null;
+
+            if (!url && !file) {
+                vflow.showToast("請輸入網址或選擇圖片再儲存", true);
+                return;
+            }
+
+            const originalText = btnUpdatePay.innerText;
+            btnUpdatePay.disabled = true;
+            btnUpdatePay.innerText = "上傳中...";
+            btnUpdatePay.classList.add('opacity-50');
+
+            try {
+                let dataToUpdate = {};
+                if (url) dataToUpdate.payUrl = url;
+
+                if (file) {
+                    vflow.showToast("正在壓縮並上傳圖片...");
+                    const compressedBase64 = await vflow.compressImg(file);
+                    
+                    const fileName = `pay_qr_${user.id}_${Date.now()}.jpg`;
+                    const sRef = storageRef(storage, `payment_settings/${fileName}`);
+                    
+                    await uploadString(sRef, compressedBase64, 'data_url');
+                    dataToUpdate.payImg = await getDownloadURL(sRef);
+                }
+
+                // 寫入對應的 Firestore 節點
+                const isSuper = user.id === 'super_admin';
+                const docRef = isSuper ? doc(db, "global_settings", "payment") : doc(db, "admins", user.id);
+                
+                await setDoc(docRef, dataToUpdate, { merge: true });
+                
+                vflow.showToast("🎉 收款資料更新成功！");
+                if (imgInput) imgInput.value = ""; 
+                
+            } catch (err) {
+                console.error("儲存失敗錯誤詳情：", err);
+                vflow.showToast("上傳失敗：" + err.message, true);
+            } finally {
+                // 無論如何，最後一定保證按鈕會回復原狀，絕對不卡死！
+                btnUpdatePay.disabled = false;
+                btnUpdatePay.innerText = originalText;
+                btnUpdatePay.classList.remove('opacity-50');
+            }
+        });
+    }
+});
+
 if (user) {
     $('login_block').classList.add('hidden'); $('admin_dashboard').classList.remove('hidden');
     $('admin-status').innerHTML = `<span class="text-xs font-bold bg-slate-900 text-white px-3 py-1 rounded-full">${user.name}</span><button onclick="sessionStorage.clear();location.reload();" class="text-xs text-rose-500 font-bold ml-2">登出</button>`;
@@ -501,8 +504,10 @@ if (user) {
     const isSuper = user.id === 'super_admin';
     const payDocRef = isSuper ? doc(db, "global_settings", "payment") : doc(db, "admins", user.id);
     getDoc(payDocRef).then((s) => {
-        if (s.exists() && s.data().payUrl) $('pay_url_input').value = s.data().payUrl;
-    }).catch(() => {});
+        if (s.exists()) {
+            if (s.data().payUrl) $('pay_url_input').value = s.data().payUrl;
+        }
+    }).catch((err) => console.error("加載初始收款網址失敗:", err));
 
     if (user.role === 'super') {
         $('super-admin-tools').classList.remove('hidden');
