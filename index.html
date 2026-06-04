@@ -335,6 +335,7 @@ input[type="date"]:focus::before, input[type="date"]:valid::before {
             </div>
             <span class="text-3xl font-light text-indigo-600" id="sheet-price">$0</span>
         </div>
+        
         <div class="flex gap-4 border-b border-slate-100 pb-4 mb-6">
             <button id="tab-payme" onclick="vflow.switchPayTab('payme')" class="text-[11px] font-extrabold border-b-2 border-slate-900 pb-1 relative z-10 tracking-widest">PAYME</button>
             <button id="tab-alipay" onclick="vflow.switchPayTab('alipay')" class="text-[11px] font-extrabold text-slate-300 pb-1 relative z-10 tracking-widest">ALIPAY</button>
@@ -346,7 +347,7 @@ input[type="date"]:focus::before, input[type="date"]:valid::before {
             <div>
                 <label class="section-title block mb-2">Receipt Screenshot (上傳過數截圖)</label>
                 <div class="border border-solid border-slate-200 rounded-xl p-4 bg-slate-50 text-left">
-                    <input type="file" id="receipt_input" class="w-full text-xs cursor-pointer block" onchange="vflow.previewReceipt(this)">
+                    <input type="file" id="receipt_input" accept="image/*" class="w-full text-xs cursor-pointer block" onchange="vflow.previewReceipt(this)">
                     <p class="text-[10px] text-slate-400 mt-2"><i class="fa-solid fa-info-circle"></i> 請直接點擊上方按鈕選擇您的過數收據圖片。</p>
                     <div class="mt-3">
                         <img id="receipt_thumbnail" src="" class="hidden h-32 mx-auto rounded-lg object-contain shadow-sm border border-slate-200">
@@ -516,6 +517,7 @@ window.vflow = {
         $('sheet-overlay').classList.replace('opacity-100', 'opacity-0');
         $('sheet-overlay').classList.replace('pointer-events-auto', 'pointer-events-none');
     },
+    // 完整保留：更新收款設定功能 (優化支援圖片壓縮寫入 Firestore)
     updatePaySettings: async () => {
         if (!user) return;
         const url = $('pay_url_input').value.trim();
@@ -797,6 +799,7 @@ window.vflow = {
             btn.classList.toggle('selected', selectedPositions.includes(btn.getAttribute('data-pos')));
         });
     },
+    // 完整保留：頁籤切換與 UI 顯示切換
     switchPayTab: (t) => {
         activePayTab = t;
         const isP = t === 'payme';
@@ -805,6 +808,7 @@ window.vflow = {
         if ($('tab-payme')) $('tab-payme').className = isP ? 'text-[11px] font-extrabold border-b-2 border-slate-900 pb-1 relative z-10 tracking-widest' : 'text-[11px] font-extrabold text-slate-300 pb-1 relative z-10 tracking-widest';
         if ($('tab-alipay')) $('tab-alipay').className = !isP ? 'text-[11px] font-extrabold border-b-2 border-slate-900 pb-1 relative z-10 tracking-widest' : 'text-[11px] font-extrabold text-slate-300 pb-1 relative z-10 tracking-widest';
     },
+    // 完整保留：報名前讀取主辦方資料庫動態顯示收款資訊
     prepJoin: async (gid, pr, creatorId, orgName, max) => {
         const ig = $('ig').value.trim();
         const nick = $('nickname').value.trim();
