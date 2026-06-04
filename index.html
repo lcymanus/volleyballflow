@@ -197,10 +197,13 @@ body {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, doc, getDoc } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+// 引入 Firebase Storage
+import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const firebaseConfig = { apiKey: 'AIzaSyBTd2xfvfNxoaD9irEx-W4B5gptzC-Mon0', authDomain: "volleyballflow-7cf02.firebaseapp.com", projectId: "volleyballflow-7cf02", storageBucket: "volleyballflow-7cf02.firebasestorage.app", messagingSenderId: "1032620495700", appId: "1:1032620495700:web:c2d84f02e435d99e15eec1" };
 const app = initializeApp(firebaseConfig);
 const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+const storage = getStorage(app); // 初始化 Storage
 const $ = id => document.getElementById(id);
 
 let currentView = 'list';
@@ -418,20 +421,28 @@ window.vflow = {
         const file = $('receipt_input').files[0];
         if (!file) return;
         const btn = $('btn-submit-reg');
-        btn.disabled = true; btn.innerText = "UPLOADING...";
+        btn.disabled = true; btn.innerText = "UPLOADING IMAGE...";
 
         try {
             const base64Img = await vflow.compressImg(file);
+            
+            // 改用 Firebase Storage 儲存圖片
+            const fileName = `receipt_${tempJoinData.gid}_${Date.now()}.jpg`;
+            const sRef = storageRef(storage, `receipts/${fileName}`);
+            await uploadString(sRef, base64Img, 'data_url');
+            const downloadURL = await getDownloadURL(sRef);
+            
             const finalStatus = isWaitlistMode ? "waitlist" : "pending";
             
+            btn.innerText = "SAVING RECORD...";
             await addDoc(collection(db, `games/${tempJoinData.gid}/players`), {
-                ...tempJoinData, status: finalStatus, receipt: base64Img, timestamp: serverTimestamp()
+                ...tempJoinData, status: finalStatus, receipt: downloadURL, timestamp: serverTimestamp()
             });
             
             alert(isWaitlistMode ? "⚠️ 目前名額已滿，您的申請已進入候補名單(Waitlist)。" : "✅ 報名收據已提交！待主辦方審核確認。");
             location.reload();
         } catch (e) {
-            vflow.showToast("上傳報名記錄失敗", true);
+            vflow.showToast("上傳報名記錄失敗: " + e.message, true);
             btn.disabled = false; btn.innerText = "CONFIRM SUBMISSION";
         }
     }
