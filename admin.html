@@ -215,6 +215,27 @@ window.vflow = {
         const parts = timeStr.split(') ');
         return parts.length === 2 ? `<div class="text-xs font-bold text-indigo-600"><span>${parts[0]})</span><br><span class="text-slate-800 font-extrabold text-sm">${parts[1]}</span></div>` : `<div class="text-xs font-bold text-indigo-600">${timeStr}</div>`;
     },
+    compressImg: (file) => new Promise((resolve, reject) => {
+        const r = new FileReader();
+        r.onload = e => {
+            const img = new Image();
+            img.onload = () => {
+                const cvs = document.createElement('canvas');
+                const max = 700; 
+                const scale = img.width > max ? max / img.width : 1;
+                cvs.width = img.width * scale;
+                cvs.height = img.height * scale;
+                const ctx = cvs.getContext('2d');
+                if (!ctx) { reject(new Error("Canvas Error")); return; }
+                ctx.drawImage(img, 0, 0, cvs.width, cvs.height);
+                resolve(cvs.toDataURL('image/jpeg', 0.6)); 
+            };
+            img.onerror = () => reject(new Error("Image Error"));
+            img.src = e.target.result;
+        };
+        r.onerror = () => reject(new Error("File Error"));
+        r.readAsDataURL(file);
+    }),
     login: async () => {
         try {
             const u = $('login_u').value.trim(); const p = $('login_p').value.trim();
@@ -248,6 +269,33 @@ window.vflow = {
             } else vflow.showToast("認證失敗", true);
         } catch (err) { vflow.showToast("程式執行錯誤", true); }
     },
+    updateMyProfile: async () => {
+        if (!user) return;
+        if (user.id === 'super_admin') {
+            vflow.showToast("超級管理員憑證為系統硬編碼，不支援由此修改", true);
+            return;
+        }
+        const newU = $('edit_my_u').value.trim();
+        const newP = $('edit_my_p').value.trim();
+        if (!newU && !newP) {
+            vflow.showToast("請至少輸入一項修改內容", true); return;
+        }
+        try {
+            const dataToUpdate = {};
+            if (newU) dataToUpdate.username = newU;
+            if (newP) dataToUpdate.password = await vflow.hashPassword(newP);
+            
+            await updateDoc(doc(db, "admins", user.id), dataToUpdate);
+            if (newU) {
+                user.name = newU;
+                sessionStorage.setItem('vf_user', JSON.stringify(user));
+            }
+            vflow.showToast("登入憑證更新成功！");
+            setTimeout(() => location.reload(), 1000);
+        } catch (err) {
+            vflow.showToast("憑證更新失敗: " + err.message, true);
+        }
+    },
     updatePaySettings: async () => {
         if (!user) return;
         const url = $('pay_url_input').value.trim(); const file = $('pay_img_input').files[0];
@@ -256,14 +304,28 @@ window.vflow = {
         const dataToUpdate = {}; if (url) dataToUpdate.payUrl = url;
 
         const saveToDB = async () => {
-            if (isSuper) await setDoc(docRef, dataToUpdate, { merge: true }); else await updateDoc(docRef, dataToUpdate);
-            vflow.showToast("收款設定更新成功！");
+            try {
+                if (isSuper) await setDoc(docRef, dataToUpdate, { merge: true }); else await updateDoc(docRef, dataToUpdate);
+                vflow.showToast("收款設定更新成功！");
+            } catch (err) {
+                vflow.showToast("儲存失敗: " + err.message, true);
+            }
         };
-        if (file) {
-            const reader = new FileReader();
-            reader.onloadend = async () => { dataToUpdate.payImg = reader.result; await saveToDB(); };
-            reader.readAsDataURL(file);
-        } else if (url) await saveToDB();
+        
+        try {
+            if (file) {
+                vflow.showToast("正在壓縮並處理圖片...");
+                const compressedBase64 = await vflow.compressImg(file);
+                dataToUpdate.payImg = compressedBase64;
+                await saveToDB();
+            } else if (url) {
+                await saveToDB();
+            } else {
+                vflow.showToast("請輸入網址或選擇圖片再變更", true);
+            }
+        } catch (e) {
+            vflow.showToast("圖片處理錯誤: " + e.message, true);
+        }
     },
     createGame: async () => {
         let loc = $('new_loc').value.trim(); const dateVal = $('new_date').value;
@@ -398,6 +460,12 @@ if (user) {
     $('login_block').classList.add('hidden'); $('admin_dashboard').classList.remove('hidden');
     $('admin-status').innerHTML = `<span class="text-xs font-bold bg-slate-900 text-white px-3 py-1 rounded-full">${user.name}</span><button onclick="sessionStorage.clear();location.reload();" class="text-xs text-rose-500 font-bold ml-2">登出</button>`;
     
+    const isSuper = user.id === 'super_admin';
+    const payDocRef = isSuper ? doc(db, "global_settings", "payment") : doc(db, "admins", user.id);
+    getDoc(payDocRef).then((s) => {
+        if (s.exists() && s.data().payUrl) $('pay_url_input').value = s.data().payUrl;
+    }).catch(() => {});
+
     if (user.role === 'super') {
         $('super-admin-tools').classList.remove('hidden');
         onSnapshot(collection(db, "admins"), (snap) => {
