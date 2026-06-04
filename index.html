@@ -280,7 +280,7 @@ input[type="date"]:focus::before, input[type="date"]:valid::before {
                         <input id="pay_url_input" type="text" placeholder="PayMe 連結" class="input-flat !py-2 text-xs">
                         <div class="flex items-center justify-between gap-2 bg-slate-50 p-2 rounded-lg border border-slate-100">
                             <input id="pay_img_input" type="file" accept="image/*" class="text-[10px] w-full cursor-pointer">
-                            <button onclick="vflow.updatePaySettings()" class="text-[10px] font-bold text-indigo-600 underline whitespace-nowrap shrink-0">更新資料</button>
+                            <button id="btn-update-pay" onclick="vflow.updatePaySettings()" class="text-[10px] font-bold text-indigo-600 underline whitespace-nowrap shrink-0">更新資料</button>
                         </div>
                     </div>
                 </div>
@@ -427,7 +427,7 @@ window.vflow = {
                 const ctx = cvs.getContext('2d');
                 if (!ctx) { reject(new Error("無法取得 Canvas Context")); return; }
                 ctx.drawImage(img, 0, 0, width, height);
-                resolve(cvs.toDataURL('image/jpeg', 0.6)); // 壓縮為 60% 畫質的 Base64
+                resolve(cvs.toDataURL('image/jpeg', 0.6));
             };
             img.onerror = () => reject(new Error("圖片載入失敗"));
             img.src = e.target.result;
@@ -525,17 +525,28 @@ window.vflow = {
         const dataToUpdate = {};
         if (url) dataToUpdate.payUrl = url;
 
+        // 獲取按鈕元素以提供防卡死、上傳中的 UI 反饋
+        const updatePayBtn = $('btn-update-pay');
+        if (updatePayBtn) {
+            updatePayBtn.innerText = "更新中...";
+            updatePayBtn.style.pointerEvents = "none";
+            updatePayBtn.style.opacity = "0.5";
+        }
+
         const saveToDB = async () => {
             try {
-                // 使用 setDoc 與 merge: true 確保不管文件存不存在都能成功寫入且不覆蓋其他原有欄位
                 await setDoc(docRef, dataToUpdate, { merge: true });
                 vflow.showToast("收款設定更新成功！");
-                $('pay_url_input').value = ''; $('pay_img_input').value = '';
-            } catch (e) { vflow.showToast("寫入資料庫失敗", true); }
+                $('pay_url_input').value = ''; 
+                $('pay_img_input').value = '';
+            } catch (e) { 
+                vflow.showToast("寫入資料庫失敗", true); 
+            }
         };
 
         try {
             if (file) {
+                // 核心修復：防止大圖轉換崩潰卡死
                 const compressedQR = await vflow.compressImg(file);
                 dataToUpdate.payImg = compressedQR;
                 await saveToDB();
@@ -544,7 +555,17 @@ window.vflow = {
             } else {
                 vflow.showToast("請填寫連結或上傳圖片", true);
             }
-        } catch (err) { vflow.showToast("上傳處理失敗", true); }
+        } catch (err) { 
+            console.error(err);
+            vflow.showToast("上傳處理失敗，請嘗試更小的截圖", true); 
+        } finally {
+            // 必定釋放 UI 狀態，確保按鈕下一次能繼續點擊
+            if (updatePayBtn) {
+                updatePayBtn.innerText = "更新資料";
+                updatePayBtn.style.pointerEvents = "auto";
+                updatePayBtn.style.opacity = "1";
+            }
+        }
     },
     createGame: async () => {
         let loc = $('new_loc').value.trim();
@@ -755,7 +776,7 @@ window.vflow = {
                             <div class="text-right">
                                 <p class="text-[9px] text-slate-400 font-medium uppercase">${p.pos}</p>
                                 ${displayStatus}
-                            </div>
+ Esp                            </div>
                         </div>`;
                     }).join('');
                     if (listContainer.innerHTML.trim() === '') {
