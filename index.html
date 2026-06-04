@@ -152,7 +152,6 @@ body {
     <div id="main-content" class="space-y-6"></div>
 </div>
 
-<!-- 報名 Bottom Sheet -->
 <div id="sheet-overlay" class="fixed inset-0 bg-slate-900/40 opacity-0 pointer-events-none transition-opacity duration-300 z-[4999] backdrop-blur-xs" onclick="vflow.closeSheet()"></div>
 <div id="bottom-sheet" class="bottom-sheet">
     <div class="max-w-md mx-auto relative z-10">
@@ -297,7 +296,7 @@ window.vflow = {
         onSnapshot(doc(db, "games", id), async (d) => {
             if (!d.exists()) return;
             const g = d.data();
-            tempJoinData = { ...tempJoinData, location: g.location };
+            tempJoinData = { location: g.location };
             
             $('main-content').innerHTML = `
                 <button onclick="location.reload()" class="section-title mb-6 flex items-center gap-2 hover:text-slate-900 transition-colors">
