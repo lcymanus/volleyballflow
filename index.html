@@ -427,7 +427,7 @@ window.vflow = {
                 const ctx = cvs.getContext('2d');
                 if (!ctx) { reject(new Error("無法取得 Canvas Context")); return; }
                 ctx.drawImage(img, 0, 0, width, height);
-                resolve(cvs.toDataURL('image/jpeg', 0.7));
+                resolve(cvs.toDataURL('image/jpeg', 0.6)); // 壓縮為 60% 畫質的 Base64
             };
             img.onerror = () => reject(new Error("圖片載入失敗"));
             img.src = e.target.result;
@@ -527,8 +527,8 @@ window.vflow = {
 
         const saveToDB = async () => {
             try {
-                if (isSuper) { await setDoc(docRef, dataToUpdate, { merge: true }); } 
-                else { await updateDoc(docRef, dataToUpdate); }
+                // 使用 setDoc 與 merge: true 確保不管文件存不存在都能成功寫入且不覆蓋其他原有欄位
+                await setDoc(docRef, dataToUpdate, { merge: true });
                 vflow.showToast("收款設定更新成功！");
                 $('pay_url_input').value = ''; $('pay_img_input').value = '';
             } catch (e) { vflow.showToast("寫入資料庫失敗", true); }
