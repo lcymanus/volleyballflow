@@ -126,7 +126,7 @@ body {
                         <input id="pay_url_input" type="text" placeholder="PayMe 網址連結" class="input-flat text-xs mb-2">
                         <div class="flex items-center justify-between bg-slate-50 p-2 rounded-lg border">
                             <input id="pay_img_input" type="file" accept="image/*" class="text-[10px] w-full">
-                            <button onclick="vflow.updatePaySettings()" class="text-[10px] font-bold text-indigo-600 underline shrink-0">變更設定</button>
+                            <button onclick="vflow.updatePaySettings()" id="btn-update-pay" class="text-[10px] font-bold text-indigo-600 underline shrink-0">變更設定</button>
                         </div>
                     </div>
                 </div>
@@ -182,12 +182,15 @@ body {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc, setDoc, updateDoc, getDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
+// 引入 Firebase Storage
+import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const _0x7f2a = ['\x38\x37\x34\x30\x38\x39\x31\x35\x39\x33\x3a\x41\x41\x45\x4e\x53\x68\x58\x64\x75\x4d\x38\x78\x4d\x47\x31\x52\x4d\x7a\x4b\x47\x47\x72\x4f\x32\x4c\x30\x65\x78\x44\x51\x5f\x72\x50\x62\x4d', '\x36\x35\x30\x33\x34\x35\x33\x31\x37\x37'];
 const firebaseConfig = { apiKey: 'AIzaSyBTd2xfvfNxoaD9irEx-W4B5gptzC-Mon0', authDomain: "volleyballflow-7cf02.firebaseapp.com", projectId: "volleyballflow-7cf02", storageBucket: "volleyballflow-7cf02.firebasestorage.app", messagingSenderId: "1032620495700", appId: "1:1032620495700:web:c2d84f02e435d99e15eec1" };
 
 const app = initializeApp(firebaseConfig);
 const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
+const storage = getStorage(app); // 初始化 Storage
 const TG_CONFIG = { token: _0x7f2a[0], chatId: _0x7f2a[1] };
 const $ = id => document.getElementById(id);
 
@@ -298,33 +301,48 @@ window.vflow = {
     },
     updatePaySettings: async () => {
         if (!user) return;
-        const url = $('pay_url_input').value.trim(); const file = $('pay_img_input').files[0];
+        const btn = $('btn-update-pay');
+        const url = $('pay_url_input').value.trim(); 
+        const file = $('pay_img_input').files[0];
         const isSuper = user.id === 'super_admin';
         const docRef = isSuper ? doc(db, "global_settings", "payment") : doc(db, "admins", user.id);
         const dataToUpdate = {}; if (url) dataToUpdate.payUrl = url;
+
+        btn.disabled = true;
 
         const saveToDB = async () => {
             try {
                 if (isSuper) await setDoc(docRef, dataToUpdate, { merge: true }); else await updateDoc(docRef, dataToUpdate);
                 vflow.showToast("收款設定更新成功！");
+                $('pay_img_input').value = ""; // 清空檔案選擇
             } catch (err) {
                 vflow.showToast("儲存失敗: " + err.message, true);
             }
+            btn.disabled = false;
         };
         
         try {
             if (file) {
-                vflow.showToast("正在壓縮並處理圖片...");
+                vflow.showToast("正在處理並上傳圖片...");
                 const compressedBase64 = await vflow.compressImg(file);
-                dataToUpdate.payImg = compressedBase64;
+                
+                // 改用 Firebase Storage 儲存圖片
+                const fileName = `pay_qr_${user.id}_${Date.now()}.jpg`;
+                const sRef = storageRef(storage, `payment_settings/${fileName}`);
+                await uploadString(sRef, compressedBase64, 'data_url');
+                const downloadURL = await getDownloadURL(sRef);
+                
+                dataToUpdate.payImg = downloadURL;
                 await saveToDB();
             } else if (url) {
                 await saveToDB();
             } else {
                 vflow.showToast("請輸入網址或選擇圖片再變更", true);
+                btn.disabled = false;
             }
         } catch (e) {
-            vflow.showToast("圖片處理錯誤: " + e.message, true);
+            vflow.showToast("圖片上傳錯誤: " + e.message, true);
+            btn.disabled = false;
         }
     },
     createGame: async () => {
@@ -338,7 +356,7 @@ window.vflow = {
             const fullTime = `${dateVal} (${weekDay}) ${$('start_time').value} - ${$('end_time').value}`;
             await addDoc(collection(db, "games"), {
                 location: loc, time: fullTime, description: $('new_desc').value,
-                maxPlayers: parseInt($('new_max').value), price: parseInt($('new_price').value),
+                maxPlayers: parseInt($new_max.value), price: parseInt($new_price.value),
                 createdBy: user.name, createdById: user.id, approved: user.role === 'super',
                 timestamp: serverTimestamp()
             });
@@ -421,7 +439,11 @@ window.vflow = {
     delP: async (gid, pid) => {
         if (confirm("確認剔除該球員嗎？")) { await deleteDoc(doc(db, `games/${gid}/players`, pid)); vflow.showToast("球員已移出"); }
     },
-    viewReceipt: (b64) => { $('receipt_display_img').src = b64; $('receipt_modal').classList.remove('hidden'); },
+    viewReceipt: (imgUrl) => { 
+        // 向下兼容：imgUrl 可能是新的下載 URL 或舊的 Base64
+        $('receipt_display_img').src = imgUrl; 
+        $('receipt_modal').classList.remove('hidden'); 
+    },
     approveGame: async (id, loc) => {
         await updateDoc(doc(db, "games", id), { approved: true }); vflow.showToast("場次審核通過！");
     },
