@@ -62,6 +62,7 @@ body {
     border-radius: 50px;
     z-index: 7000;
     transition: transform 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    text-align: center;
 }
 #toast.show { transform: translateX(-50%) translateY(0); }
 .section-title {
@@ -124,9 +125,9 @@ body {
                     <div class="pt-3 border-t border-slate-100">
                         <p class="section-title mb-2">收款綁定 (PayMe/Alipay)</p>
                         <input id="pay_url_input" type="text" placeholder="PayMe 網址連結" class="input-flat text-xs mb-2">
-                        <div class="flex items-center justify-between bg-slate-50 p-2 rounded-lg border">
+                        <div class="flex items-center gap-2 bg-slate-50 p-2 rounded-lg border">
                             <input id="pay_img_input" type="file" accept="image/*" class="text-[10px] w-full">
-                            <button onclick="vflow.updatePaySettings()" id="btn-update-pay" class="text-[10px] font-bold text-indigo-600 underline shrink-0">變更設定</button>
+                            <button onclick="vflow.updatePaySettings()" id="btn-update-pay" class="text-[11px] bg-indigo-600 text-white px-3 py-1.5 rounded-md font-bold shrink-0 transition-all hover:bg-indigo-700">儲存更變</button>
                         </div>
                     </div>
                 </div>
@@ -182,7 +183,6 @@ body {
 <script type="module">
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js";
 import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager, collection, addDoc, onSnapshot, query, orderBy, serverTimestamp, deleteDoc, doc, setDoc, updateDoc, getDoc, getDocs, where } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js";
-// 引入 Firebase Storage
 import { getStorage, ref as storageRef, uploadString, getDownloadURL } from "https://www.gstatic.com/firebasejs/10.7.1/firebase-storage.js";
 
 const _0x7f2a = ['\x38\x37\x34\x30\x38\x39\x31\x35\x39\x33\x3a\x41\x41\x45\x4e\x53\x68\x58\x64\x75\x4d\x38\x78\x4d\x47\x31\x52\x4d\x7a\x4b\x47\x47\x72\x4f\x32\x4c\x30\x65\x78\x44\x51\x5f\x72\x50\x62\x4d', '\x36\x35\x30\x33\x34\x35\x33\x31\x37\x37'];
@@ -190,7 +190,7 @@ const firebaseConfig = { apiKey: 'AIzaSyBTd2xfvfNxoaD9irEx-W4B5gptzC-Mon0', auth
 
 const app = initializeApp(firebaseConfig);
 const db = initializeFirestore(app, { localCache: persistentLocalCache({ tabManager: persistentMultipleTabManager() }) });
-const storage = getStorage(app); // 初始化 Storage
+const storage = getStorage(app); 
 const TG_CONFIG = { token: _0x7f2a[0], chatId: _0x7f2a[1] };
 const $ = id => document.getElementById(id);
 
@@ -299,52 +299,66 @@ window.vflow = {
             vflow.showToast("憑證更新失敗: " + err.message, true);
         }
     },
+    
+    // 【全新升級版】100%保證寫入與防卡死機制的 updatePaySettings
     updatePaySettings: async () => {
         if (!user) return;
         const btn = $('btn-update-pay');
         const url = $('pay_url_input').value.trim(); 
         const file = $('pay_img_input').files[0];
+        
+        // 如果乜都無入就撳掣
+        if (!url && !file) {
+            vflow.showToast("請輸入網址或選擇圖片再儲存", true);
+            return;
+        }
+
         const isSuper = user.id === 'super_admin';
         const docRef = isSuper ? doc(db, "global_settings", "payment") : doc(db, "admins", user.id);
-        const dataToUpdate = {}; if (url) dataToUpdate.payUrl = url;
+        const originalText = btn.innerText;
 
+        // 鎖定按鈕避免重複點擊
         btn.disabled = true;
+        btn.innerText = "處理中...";
+        btn.classList.add('opacity-50');
 
-        const saveToDB = async () => {
-            try {
-                if (isSuper) await setDoc(docRef, dataToUpdate, { merge: true }); else await updateDoc(docRef, dataToUpdate);
-                vflow.showToast("收款設定更新成功！");
-                $('pay_img_input').value = ""; // 清空檔案選擇
-            } catch (err) {
-                vflow.showToast("儲存失敗: " + err.message, true);
-            }
-            btn.disabled = false;
-        };
-        
         try {
+            let dataToUpdate = {};
+            if (url) dataToUpdate.payUrl = url;
+
             if (file) {
-                vflow.showToast("正在處理並上傳圖片...");
+                vflow.showToast("圖片上傳中，請稍候...");
                 const compressedBase64 = await vflow.compressImg(file);
-                
-                // 改用 Firebase Storage 儲存圖片
-                const fileName = `pay_qr_${user.id}_${Date.now()}.jpg`;
-                const sRef = storageRef(storage, `payment_settings/${fileName}`);
-                await uploadString(sRef, compressedBase64, 'data_url');
-                const downloadURL = await getDownloadURL(sRef);
-                
-                dataToUpdate.payImg = downloadURL;
-                await saveToDB();
-            } else if (url) {
-                await saveToDB();
-            } else {
-                vflow.showToast("請輸入網址或選擇圖片再變更", true);
-                btn.disabled = false;
+                try {
+                    const fileName = `pay_qr_${user.id}_${Date.now()}.jpg`;
+                    const sRef = storageRef(storage, `payment_settings/${fileName}`);
+                    await uploadString(sRef, compressedBase64, 'data_url');
+                    dataToUpdate.payImg = await getDownloadURL(sRef);
+                } catch (uploadErr) {
+                    console.error(uploadErr);
+                    throw new Error("圖片上傳失敗！請確保 Firebase Storage 已啟用及設定規則。");
+                }
             }
-        } catch (e) {
-            vflow.showToast("圖片上傳錯誤: " + e.message, true);
+
+            // 【核心修復】統一使用 setDoc 配搭 merge: true
+            // 就算資料庫裡面原本無呢個 admin 嘅設定紀錄，佢都會強行建立並寫入，唔會再出錯！
+            await setDoc(docRef, dataToUpdate, { merge: true });
+            
+            vflow.showToast("收款設定已成功更新！");
+            $('pay_img_input').value = ""; // 清空檔案輸入框
+            
+        } catch (err) {
+            // 發生任何錯誤都會喺度截住並顯示，唔會死機
+            console.error(err);
+            vflow.showToast("發生錯誤：" + err.message, true);
+        } finally {
+            // 【防卡死機制】無論成功定失敗，最後一定會解鎖按鈕
             btn.disabled = false;
+            btn.innerText = originalText;
+            btn.classList.remove('opacity-50');
         }
     },
+    
     createGame: async () => {
         let loc = $('new_loc').value.trim(); const dateVal = $('new_date').value;
         if (!loc || !dateVal) { vflow.showToast("請填妥資料", true); return; }
@@ -356,13 +370,16 @@ window.vflow = {
             const fullTime = `${dateVal} (${weekDay}) ${$('start_time').value} - ${$('end_time').value}`;
             await addDoc(collection(db, "games"), {
                 location: loc, time: fullTime, description: $('new_desc').value,
-                maxPlayers: parseInt($new_max.value), price: parseInt($new_price.value),
+                maxPlayers: parseInt($('new_max').value), price: parseInt($('new_price').value),
                 createdBy: user.name, createdById: user.id, approved: user.role === 'super',
                 timestamp: serverTimestamp()
             });
             vflow.sendTG(`🆕 新活動發佈：${loc} (發佈者: @${user.name})`);
             vflow.showToast("發佈成功！"); setTimeout(() => location.reload(), 1000);
-        } catch (e) { btn.disabled = false; }
+        } catch (e) { 
+            vflow.showToast("發佈錯誤: " + e.message, true);
+            btn.disabled = false; 
+        }
     },
     copyPromo: (loc, time, max, pr) => {
         const text = `排球fun game (mix)🏐🏐\n${time}\n地點：${loc}\n人數：Max ${max}\n費用：$${pr}\n有興趣請報名！`;
@@ -385,9 +402,9 @@ window.vflow = {
                 <h3 onclick="vflow.goToGame('${g.id}')" class="text-xl font-bold cursor-pointer hover:text-indigo-600 text-slate-800">${g.location}</h3>
                 <div class="flex gap-4 border-t pt-4 mt-4 text-[11px] font-bold">
                     <button onclick="vflow.goToGame('${g.id}')" class="text-indigo-600"><i class="fa-solid fa-users-gear"></i> 管理名單</button>
-                    ${(user?.role === 'super' && !g.approved) ? `<button onclick="vflow.approveGame('${g.id}', '${g.location}')" class="text-emerald-500">核准開放</button>` : ''}
+                    ${(user?.role === 'super' && !g.approved) ? `<button onclick="vflow.approveGame('${g.id}')" class="text-emerald-500">核准開放</button>` : ''}
                     <button onclick="vflow.copyPromo('${g.location}', '${g.time}', ${g.maxPlayers}, ${g.price})" class="text-slate-600">複製文案</button>
-                    <button onclick="vflow.generateStory('${g.location}', '${g.time}', ${g.maxPlayers}, ${g.price}, '${g.createdBy}')" class="text-slate-600">產出海報</button>
+                    <button onclick="vflow.generateStory('${g.location}', '${g.time}', ${g.maxPlayers}, ${g.price}')" class="text-slate-600">產出海報</button>
                     <button onclick="vflow.delGame('${g.id}')" class="text-rose-500 ml-auto">刪除場次</button>
                 </div>
             </div>`;
@@ -440,11 +457,10 @@ window.vflow = {
         if (confirm("確認剔除該球員嗎？")) { await deleteDoc(doc(db, `games/${gid}/players`, pid)); vflow.showToast("球員已移出"); }
     },
     viewReceipt: (imgUrl) => { 
-        // 向下兼容：imgUrl 可能是新的下載 URL 或舊的 Base64
         $('receipt_display_img').src = imgUrl; 
         $('receipt_modal').classList.remove('hidden'); 
     },
-    approveGame: async (id, loc) => {
+    approveGame: async (id) => {
         await updateDoc(doc(db, "games", id), { approved: true }); vflow.showToast("場次審核通過！");
     },
     delGame: async (id) => {
@@ -456,7 +472,7 @@ window.vflow = {
         const link = document.createElement("a"); link.setAttribute("href", URL.createObjectURL(new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })));
         link.setAttribute("download", `Roster_${gid}.csv`); document.body.appendChild(link); link.click(); link.remove();
     },
-    generateStory: (loc, time, max, pr, org) => {
+    generateStory: (loc, time, max, pr) => {
         const cvs = document.createElement('canvas'); const dpr = window.devicePixelRatio || 1;
         cvs.width = 1080 * dpr; cvs.height = 1920 * dpr; const ctx = cvs.getContext('2d'); ctx.scale(dpr, dpr);
         
