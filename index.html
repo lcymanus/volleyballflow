@@ -184,6 +184,8 @@ input[type="date"]:focus::before, input[type="date"]:valid::before {
     z-index: 5000;
     padding: 32px 24px;
     box-shadow: 0 -10px 25px -5px rgba(0, 0, 0, 0.05);
+    max-height: 90vh;
+    overflow-y: auto;
 }
 .bottom-sheet.open {
     transform: translateY(0);
@@ -271,11 +273,11 @@ input[type="date"]:focus::before, input[type="date"]:valid::before {
                 <div class="grid grid-cols-2 gap-3">
                     <div>
                         <label class="section-title !tracking-widest !text-[9px]">Max Count</label>
-                        <input id="new_max" type="number" value="15" class="input-flat font-bold text-center">
+                        <input id="new_max" type="number" value="15" min="1" max="100" class="input-flat font-bold text-center">
                     </div>
                     <div>
                         <label class="section-title !tracking-widest !text-[9px]">Price (HKD)</label>
-                        <input id="new_price" type="number" value="30" class="input-flat font-bold text-center">
+                        <input id="new_price" type="number" value="30" min="0" step="5" class="input-flat font-bold text-center">
                     </div>
                 </div>
                 <div class="pt-3 border-t border-slate-100">
@@ -389,9 +391,25 @@ let currentView = 'list';
 let selectedPositions = [];
 let secretClicks = 0;
 let tempJoinData = {};
-let currentPlayers = []; // 全域狀態：保存當前場次的所有報名者，用於防呆與候補計算
-let isWaitlistMode = false; // 全域狀態：標記當前報名是否為候補
-let activePayTab = 'payme'; // 追蹤當前激活的支付渠道
+let currentPlayers = [];
+let isWaitlistMode = false;
+let activePayTab = 'payme';
+
+// 【新增】Listener 管理系統：防止重複訂閱與內存洩漏
+let activeListeners = {
+    gamesList: null,
+    playersList: null,
+    adminsList: null
+};
+
+const unsubscribeAll = () => {
+    Object.keys(activeListeners).forEach(key => {
+        if (activeListeners[key]) {
+            activeListeners[key]();
+            activeListeners[key] = null;
+        }
+    });
+};
 
 window.vflow = {
     hashPassword: async (password) => {
@@ -414,14 +432,25 @@ window.vflow = {
         setTimeout(() => t.classList.remove('show'), 3000);
     },
     
-    // 深度優化升級的壓縮核心：防止大圖溢出並支持全面屏寬度自適應
+    // 【升級】圖片壓縮核心：增加文件類型與大小檢驗
     compressImg: (file) => new Promise((resolve, reject) => {
+        // 驗證文件類型
+        if (!file.type.startsWith('image/')) {
+            reject(new Error("只支持圖片文件"));
+            return;
+        }
+        // 驗證文件大小（最多 10MB）
+        if (file.size > 10 * 1024 * 1024) {
+            reject(new Error("圖片大小不能超過 10MB"));
+            return;
+        }
+
         const r = new FileReader();
         r.onload = e => {
             const img = new Image();
             img.onload = () => {
                 const cvs = document.createElement('canvas');
-                const max = 800; // 稍作提升，保證後台查閱清晰度
+                const max = 800;
                 let width = img.width;
                 let height = img.height;
                 if (width > height) {
@@ -434,7 +463,7 @@ window.vflow = {
                 const ctx = cvs.getContext('2d');
                 if (!ctx) { reject(new Error("無法取得 Canvas Context")); return; }
                 ctx.drawImage(img, 0, 0, width, height);
-                resolve(cvs.toDataURL('image/jpeg', 0.7)); // 優化壓縮系數至 0.7 提高清晰度
+                resolve(cvs.toDataURL('image/jpeg', 0.7));
             };
             img.onerror = () => reject(new Error("圖片載入失敗"));
             img.src = e.target.result;
@@ -453,11 +482,15 @@ window.vflow = {
     },
     closeLogin: () => { $('login_modal').classList.add('hidden'); },
     closeStory: () => { $('story_modal').classList.add('hidden'); },
+    
+    // 【升級】時間顯示：更強大的解析邏輯
     formatTimeDisplay: (timeStr) => {
         if (!timeStr) return '';
-        const parts = timeStr.split(') ');
-        if (parts.length === 2) {
-            return `<div class="text-[14px] font-extrabold text-indigo-600 tracking-wider leading-snug"><span class="block">${parts[0]})</span><span class="block text-slate-800 text-base font-bold">${parts[1]}</span></div>`;
+        // 支持多種格式：YYYY-MM-DD (WD) HH:MM - HH:MM
+        const dateTimeMatch = timeStr.match(/(\d{4}-\d{2}-\d{2})\s*\((.)\)\s*([\d:]+)\s*-\s*([\d:]+)/);
+        if (dateTimeMatch) {
+            const [, date, day, start, end] = dateTimeMatch;
+            return `<div class="text-[14px] font-extrabold text-indigo-600 tracking-wider leading-snug"><span class="block">${date} (${day})</span><span class="block text-slate-800 text-base font-bold">${start} - ${end}</span></div>`;
         }
         return `<div class="text-[14px] font-extrabold text-indigo-600 tracking-wider">${timeStr}</div>`;
     },
@@ -528,7 +561,7 @@ window.vflow = {
         $('sheet-overlay').classList.replace('pointer-events-auto', 'pointer-events-none');
     },
 
-    // 優化主辦方上傳二維碼與連結邏輯，支持異步FileReader安全校驗
+    // 【升級】支付設定：增加文件驗證
     updatePaySettings: async () => {
         if (!user) return;
         const url = $('pay_url_input').value.trim();
@@ -549,7 +582,6 @@ window.vflow = {
 
         try {
             if (file) {
-                // 自動調用前端壓縮防超載
                 const compressedQR = await vflow.compressImg(file);
                 dataToUpdate.payImg = compressedQR;
                 await saveToDB();
@@ -558,13 +590,19 @@ window.vflow = {
             } else {
                 vflow.showToast("請填寫連結或上傳圖片", true);
             }
-        } catch (err) { vflow.showToast("上傳處理失敗", true); }
+        } catch (err) { vflow.showToast("上傳處理失敗：" + err.message, true); }
     },
 
     createGame: async () => {
         let loc = $('new_loc').value.trim();
         const dateVal = $('new_date').value;
+        const maxVal = parseInt($('new_max').value);
+        const priceVal = parseInt($('new_price').value);
+        
         if (!loc || !dateVal) { vflow.showToast("請填妥場地與日期", true); return; }
+        if (maxVal < 1 || maxVal > 100) { vflow.showToast("人數限制必須在 1-100 之間", true); return; }
+        if (priceVal < 0) { vflow.showToast("價格不能為負數", true); return; }
+        
         if (!loc.endsWith('體育館')) loc += '體育館';
         
         const btn = $('btn-create-game');
@@ -576,7 +614,7 @@ window.vflow = {
             const fullTime = `${dateVal} (${weekDay}) ${$('start_time').value} - ${$('end_time').value}`;
             await addDoc(collection(db, "games"), {
                 location: loc, time: fullTime, description: $('new_desc').value,
-                maxPlayers: parseInt($('new_max').value), price: parseInt($('new_price').value),
+                maxPlayers: maxVal, price: priceVal,
                 createdBy: user.name, createdById: user.id, approved: user.role === 'super',
                 timestamp: serverTimestamp()
             });
@@ -650,14 +688,17 @@ window.vflow = {
             </div>`;
 
         try {
-            onSnapshot(doc(db, "games", id), async (d) => {
+            // 【升級】取消舊的 listeners，防止內存洩漏
+            if (activeListeners.playersList) activeListeners.playersList();
+            
+            activeListeners.playersList = onSnapshot(doc(db, "games", id), async (d) => {
                 if (!d.exists()) return;
                 const g = d.data();
                 const isMgr = user?.role === 'super' || user?.id === g.createdById;
                 tempJoinData = { ...tempJoinData, location: g.location };
                 
                 $('main-content').innerHTML = `
-                    <button onclick="location.reload()" class="section-title mb-6 flex items-center gap-2 hover:text-slate-900 transition-colors">
+                    <button onclick="vflow.returnToList()" class="section-title mb-6 flex items-center gap-2 hover:text-slate-900 transition-colors">
                         <i class="fa-solid fa-arrow-left"></i> Back to list
                     </button>
                     
@@ -719,10 +760,20 @@ window.vflow = {
             });
         } catch (err) { vflow.showToast("載入活動詳情失敗", true); }
     },
+
+    // 【新增】返回列表的方法：取消舊 listeners
+    returnToList: () => {
+        unsubscribeAll();
+        currentView = 'list';
+        vflow.renderGamesList();
+    },
     
     listenPlayers: (gid, isMgr, max) => {
         try {
-            onSnapshot(query(collection(db, `games/${gid}/players`), orderBy("timestamp", "asc")), (snap) => {
+            // 【升級】取消舊的 listeners
+            if (activeListeners.playersList) activeListeners.playersList();
+            
+            activeListeners.playersList = onSnapshot(query(collection(db, `games/${gid}/players`), orderBy("timestamp", "asc")), (snap) => {
                 currentPlayers = [];
                 snap.forEach(d => currentPlayers.push({ id: d.id, ...d.data() }));
                 
@@ -748,7 +799,6 @@ window.vflow = {
                             statusBadge = `<span class="text-blue-500 font-bold text-[10px] bg-blue-50 px-2 py-0.5 rounded border border-blue-100">待審核</span>`;
                         }
 
-                        // 支持提取並渲染所使用的支付方式標籤
                         const channelLabel = p.payChannel ? `<span class="text-[9px] bg-slate-100 text-slate-600 px-1 rounded ml-1 font-normal">${p.payChannel.toUpperCase()}</span>` : '';
 
                         return `
@@ -801,7 +851,7 @@ window.vflow = {
     },
     
     switchPayTab: (t) => {
-        activePayTab = t; // 同步保存全局當前所選渠道
+        activePayTab = t;
         const isP = t === 'payme';
         if ($('content-payme')) $('content-payme').classList.toggle('hidden', !isP);
         if ($('content-alipay')) $('content-alipay').classList.toggle('hidden', isP);
@@ -898,7 +948,6 @@ window.vflow = {
             const base64Img = await vflow.compressImg(file);
             const finalStatus = isWaitlistMode ? "waitlist" : "pending";
             
-            // 寫入數據庫，額外附帶當前付款所用渠道標記 (payChannel)
             await addDoc(collection(db, `games/${tempJoinData.gid}/players`), {
                 ...tempJoinData,
                 status: finalStatus,
@@ -1019,7 +1068,8 @@ window.vflow = {
         if (confirm("警告：確定要永久刪除此排球活動場次嗎？")) {
             try {
                 await deleteDoc(doc(db, "games", id));
-                vflow.showToast("活動已成功移除");
+                vflow.showToast("活動已成功刪除");
+                vflow.returnToList();
             } catch (e) { vflow.showToast("刪除失敗", true); }
         }
     },
@@ -1088,6 +1138,18 @@ window.vflow = {
             vflow.showToast(`已成功重設該管理員密碼`);
             $(`admin_p_${id}`).value = '';
         } catch (err) { vflow.showToast("重置密碼失敗", true); }
+    },
+
+    // 【新增】專門的遊戲列表渲染方法
+    renderGamesList: () => {
+        currentView = 'list';
+        try {
+            if (activeListeners.gamesList) activeListeners.gamesList();
+            activeListeners.gamesList = onSnapshot(query(collection(db, "games"), orderBy("timestamp", "desc")), (snap) => {
+                const games = []; snap.forEach(d => games.push({ id: d.id, ...d.data() }));
+                vflow.renderList(games);
+            });
+        } catch (globalErr) { console.error("系統核心初始化常規異常", globalErr); }
     }
 };
 
@@ -1102,7 +1164,8 @@ if (user) {
     if (user.role === 'super') {
         if ($('super-admin-tools')) $('super-admin-tools').classList.remove('hidden');
         try {
-            onSnapshot(collection(db, "admins"), (snap) => {
+            if (activeListeners.adminsList) activeListeners.adminsList();
+            activeListeners.adminsList = onSnapshot(collection(db, "admins"), (snap) => {
                 const list = []; snap.forEach(d => list.push({ id: d.id, ...d.data() }));
                 if ($('admin-list-container')) {
                     $('admin-list-container').innerHTML = `<p class="mb-2 text-slate-400 text-[10px] font-bold uppercase tracking-wider">Sub-Admin Accounts:</p>` + list.map(a => `
@@ -1130,10 +1193,8 @@ try {
         }
     };
     
-    onSnapshot(query(collection(db, "games"), orderBy("timestamp", "desc")), (snap) => {
-        const games = []; snap.forEach(d => games.push({ id: d.id, ...d.data() }));
-        if (currentView === 'list') vflow.renderList(games);
-    });
+    // 【升級】初始化遊戲列表
+    vflow.renderGamesList();
 } catch (globalErr) { console.error("系統核心初始化常規異常", globalErr); }
 </script>
 </body>
